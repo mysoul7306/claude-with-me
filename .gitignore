@@ -1,0 +1,9 @@
+node_modules/
+config.json
+cache/
+logs/
+*.log
+.DS_Store
+.env
+assets/superpowers/
+scripts/test-docker.sh

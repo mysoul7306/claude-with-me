@@ -1,0 +1,20 @@
+{
+  "userName": "your-name",
+  "role": "Your Role",
+  "avatar": "🧑‍💻",
+  "port": 3000,
+  "accentColor": "#419BFF",
+  "language": "en",
+  "journey": {
+    "todoLimit": 10,
+    "historyLimit": 20
+  },
+  "claude": {
+    "model": "opus",
+    "cliPath": "claude"
+  },
+  "claudeMem": {
+    "disableReadCache": false,
+    "excludedProjects": []
+  }
+}

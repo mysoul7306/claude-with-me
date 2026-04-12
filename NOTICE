@@ -1,0 +1,7 @@
+claude-with-me
+Copyright 2026 rok_root
+
+This product reads data from claude-mem, a Claude Code plugin
+by @thedotmack (https://github.com/thedotmack).
+claude-mem provides the session memory database that powers
+this dashboard's journey and statistics features.

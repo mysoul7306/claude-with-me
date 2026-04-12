@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude with Me</title>
+<meta http-equiv="refresh" content="10800">
+<link rel="stylesheet" href="/fonts/local-fonts.css">
+<style>
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0e1a;
+    --card: #111827;
+    --card-border: #1e293b;
+    --accent-blue: #3b82f6;
+    --accent-user: #419BFF;
+    --accent-orange: #f59e0b;
+    --accent-green: #10b981;
+    --accent-pink: #ec4899;
+    --accent-cyan: #06b6d4;
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --text-bright: #f8fafc;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans KR', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated background */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(59,130,246,0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(139,92,246,0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 80%, rgba(245,158,11,0.05) 0%, transparent 50%);
+    z-index: -1;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  /* ===== HEADER ===== */
+  .header {
+    text-align: center;
+    margin-bottom: 64px;
+    position: relative;
+  }
+
+  .header h1 {
+    font-size: 3rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-user), var(--accent-pink));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+    letter-spacing: -1px;
+  }
+
+  .header .subtitle {
+    font-size: 1.1rem;
+    color: var(--text-dim);
+    font-weight: 300;
+  }
+
+  .header .clock {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, #f59e0b, #fbbf24, #fde68a);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 4px;
+    margin-bottom: 8px;
+    opacity: 0.9;
+  }
+
+  .header .date {
+    margin-top: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--accent-blue);
+    opacity: 0.6;
+  }
+
+  /* ===== WHO IS ROK ===== */
+  .section-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-title .icon {
+    font-size: 1.8rem;
+  }
+
+  .profile-section {
+    margin-bottom: 56px;
+  }
+
+  .profile-card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 40px;
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 40px;
+    align-items: center;
+  }
+
+  .avatar-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .avatar-orbit {
+    position: relative;
+    width: 220px;
+    height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .avatar {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent-orange), var(--accent-pink));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 4rem;
+    position: relative;
+    overflow: visible;
+    box-shadow: 0 0 40px rgba(245,158,11,0.2);
+  }
+
+  @keyframes orbit {
+    0% { transform: rotate(0deg) translateX(10px) rotate(0deg); }
+    100% { transform: rotate(360deg) translateX(10px) rotate(-360deg); }
+  }
+
+  .avatar-name {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text-bright);
+  }
+
+  .avatar-role {
+    font-size: 0.85rem;
+    color: var(--accent-orange);
+    font-weight: 500;
+  }
+
+  .profile-traits {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .trait {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: rgba(255,255,255,0.02);
+    border-radius: 12px;
+    border-left: 3px solid var(--accent-blue);
+    transition: transform 0.2s;
+  }
+
+  .trait:hover {
+    transform: translateX(4px);
+  }
+
+  .trait:nth-child(2) { border-left-color: var(--accent-user); }
+  .trait:nth-child(3) { border-left-color: var(--accent-green); }
+  .trait:nth-child(4) { border-left-color: var(--accent-orange); }
+  .trait:nth-child(5) { border-left-color: var(--accent-pink); }
+
+  .trait .trait-icon { font-size: 1.3rem; flex-shrink: 0; }
+  .trait .trait-text { font-size: 0.95rem; line-height: 1.6; }
+  .trait .trait-text strong { color: var(--text-bright); }
+
+  /* ===== RELATIONSHIP ===== */
+  .relationship-section {
+    margin-bottom: 56px;
+  }
+
+  .relationship-visual {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+  }
+
+  .entity-bubble {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+    position: relative;
+  }
+
+  .entity-bubble.user {
+    background: linear-gradient(135deg, color-mix(in srgb, var(--accent-user) 13%, transparent), rgba(59,130,246,0.13));
+    border: 2px solid var(--accent-user);
+    color: var(--accent-user);
+  }
+
+  .entity-bubble.claude {
+    background: linear-gradient(135deg, #f59e0b22, #ec489922);
+    border: 2px solid #f59e0b;
+    color: #f59e0b;
+  }
+
+  .entity-bubble .emoji { font-size: 2.5rem; margin-bottom: 4px; }
+
+  .connection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .connection-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--accent-cyan);
+  }
+
+  .connection-line .arrow {
+    font-size: 1.2rem;
+  }
+
+  .connection-label {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    text-align: center;
+    max-width: 140px;
+  }
+
+  /* ===== KEYWORD CLOUD ===== */
+  .keywords {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 40px;
+  }
+
+  .keyword {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border: 1px solid;
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: default;
+  }
+
+  .keyword:hover {
+    transform: scale(1.08);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+
+  .keyword.blue { color: var(--accent-blue); border-color: rgba(59,130,246,0.3); background: rgba(59,130,246,0.08); }
+  .keyword.purple { color: var(--accent-user); border-color: rgba(139,92,246,0.3); background: rgba(139,92,246,0.08); }
+  .keyword.orange { color: var(--accent-orange); border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.08); }
+  .keyword.green { color: var(--accent-green); border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.08); }
+  .keyword.pink { color: var(--accent-pink); border-color: rgba(236,72,153,0.3); background: rgba(236,72,153,0.08); }
+  .keyword.cyan { color: var(--accent-cyan); border-color: rgba(6,182,212,0.3); background: rgba(6,182,212,0.08); }
+
+
+
+  /* ===== PHILOSOPHY ===== */
+  .philosophy-section {
+    margin-bottom: 56px;
+  }
+
+  .philosophy-banner {
+    background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(139,92,246,0.1));
+    border: 1px solid rgba(139,92,246,0.2);
+    border-radius: 20px;
+    padding: 48px;
+    text-align: center;
+  }
+
+  .philosophy-banner .big-quote {
+    font-size: 2.4rem;
+    font-weight: 700;
+    color: var(--text-bright);
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+
+  .philosophy-banner .big-quote span {
+    background: linear-gradient(135deg, var(--accent-user), #74c7ec);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .philosophy-banner .explanation {
+    font-size: 1.15rem;
+    color: var(--text-dim);
+    max-width: 800px;
+    margin: 0 auto;
+    line-height: 1.9;
+  }
+
+  /* ===== TIMELINE ===== */
+  .timeline-section {
+    margin-bottom: 56px;
+  }
+
+  .timeline {
+    position: relative;
+    padding-left: 32px;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--accent-blue), var(--accent-user), var(--accent-orange));
+  }
+
+  .timeline-item {
+    position: relative;
+    margin-bottom: 28px;
+    padding: 16px 20px;
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+  }
+
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -28px;
+    top: 22px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--accent-blue);
+    border: 2px solid var(--bg);
+  }
+
+  .timeline-item:nth-child(2)::before { background: var(--accent-user); }
+  .timeline-item:nth-child(3)::before { background: var(--accent-green); }
+  .timeline-item:nth-child(4)::before { background: var(--accent-orange); }
+  .timeline-item:nth-child(5)::before { background: var(--accent-pink); }
+
+  .timeline-item .tl-date {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--accent-cyan);
+    margin-bottom: 6px;
+  }
+
+  .timeline-item .tl-title {
+    font-weight: 700;
+    color: var(--text-bright);
+    margin-bottom: 4px;
+  }
+
+  .timeline-item .tl-desc {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+
+  /* ===== STATS ===== */
+  .stats-section {
+    margin-bottom: 56px;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px;
+  }
+
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 24px;
+    text-align: center;
+    transition: transform 0.2s;
+  }
+
+  .stat-card:hover { transform: translateY(-4px); }
+
+  .stat-card .stat-value {
+    font-size: 2rem;
+    font-weight: 900;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .stat-card:nth-child(1) .stat-value { color: var(--accent-blue); }
+  .stat-card:nth-child(2) .stat-value { color: var(--accent-user); }
+  .stat-card:nth-child(3) .stat-value { color: var(--accent-orange); }
+  .stat-card:nth-child(4) .stat-value { color: var(--accent-green); }
+  .stat-card:nth-child(5) .stat-value { color: var(--accent-pink); }
+
+  .stat-card .stat-label {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin-top: 6px;
+  }
+
+  /* ===== FOOTER ===== */
+  .footer {
+    text-align: center;
+    margin-top: 80px;
+    padding-top: 32px;
+    border-top: 1px solid var(--card-border);
+  }
+
+  .footer .heart {
+    font-size: 2rem;
+    margin-bottom: 12px;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+  }
+
+  .footer p {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    line-height: 1.8;
+  }
+
+  .footer .sig {
+    margin-top: 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: rgba(148, 163, 184, 0.4);
+  }
+
+  /* ===== AVATAR DECOR (원형 orbit, 최대 10개) ===== */
+  .avatar-decor {
+    position: absolute;
+    font-size: 1.4rem;
+    z-index: 2;
+    top: 50%;
+    left: 50%;
+    margin: -0.7rem;
+    animation: orbit-decor var(--orbit-duration, 8s) linear infinite;
+    animation-delay: var(--orbit-delay, 0s);
+  }
+  @keyframes orbit-decor {
+    0% { transform: rotate(var(--orbit-start, 0deg)) translateX(var(--orbit-radius, 70px)) rotate(calc(-1 * var(--orbit-start, 0deg))); }
+    100% { transform: rotate(calc(var(--orbit-start, 0deg) + 360deg)) translateX(var(--orbit-radius, 70px)) rotate(calc(-1 * (var(--orbit-start, 0deg) + 360deg))); }
+  }
+
+  /* ===== ERROR MESSAGE ===== */
+  .error-message {
+    color: #f59e0b;
+    font-style: italic;
+    padding: 16px;
+    border-left: 3px solid #f59e0b33;
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 768px) {
+    .header .clock { font-size: 3rem; }
+    .header h1 { font-size: 2.1rem; }
+    .profile-card { grid-template-columns: 1fr; text-align: center; }
+    .avatar-area { margin-bottom: 16px; }
+    .trait { border-left: none; border-top: 3px solid var(--accent-blue); }
+    .trait:nth-child(2) { border-top-color: var(--accent-user); }
+    .trait:nth-child(3) { border-top-color: var(--accent-green); }
+    .trait:nth-child(4) { border-top-color: var(--accent-orange); }
+    .trait:nth-child(5) { border-top-color: var(--accent-pink); }
+    .relationship-visual { flex-direction: column; }
+    .connection { transform: rotate(90deg); }
+    .philosophy-banner { padding: 28px; }
+    .philosophy-banner .big-quote { font-size: 1.6rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="clock" id="header-clock">--:--:--</div>
+    <h1 id="main-title">Claude with Me</h1>
+    <div class="subtitle" id="subtitle"></div>
+    <div class="date" id="header-meta">loading...</div>
+  </div>
+
+  <!-- WHO IS ROK -->
+  <div class="profile-section">
+    <div class="section-title" id="section-through-my-eyes"><span class="icon">👤</span> Through My Eyes</div>
+    <div class="profile-card">
+      <div class="avatar-area">
+        <div class="avatar-orbit" id="avatar-orbit">
+          <div class="avatar">
+            <span id="avatar-emoji"></span>
+          </div>
+        </div>
+        <div class="avatar-name" id="user-name"></div>
+        <div class="avatar-role" id="user-role"></div>
+      </div>
+      <div id="profile-traits" class="profile-traits"></div>
+    </div>
+  </div>
+
+  <!-- RELATIONSHIP -->
+  <div class="relationship-section">
+    <div class="section-title" id="section-claude-with-me"><span class="icon">🔗</span> Claude With Me</div>
+
+    <div class="relationship-visual">
+      <div class="entity-bubble claude">
+        <span class="emoji">🤖</span>
+        Claude
+      </div>
+      <div class="connection">
+        <div class="connection-line" id="rel-claude-to-user"><span class="arrow">→</span> loading...</div>
+        <div class="connection-line" id="rel-user-to-claude"><span class="arrow">←</span> loading...</div>
+        <div class="connection-label" id="rel-bond">loading...</div>
+      </div>
+      <div class="entity-bubble user">
+        <span class="emoji">🧑‍💻</span>
+        <span class="entity-name"></span>
+      </div>
+    </div>
+
+    <div id="keywords" class="keywords"></div>
+  </div>
+
+  <!-- PHILOSOPHY -->
+  <div class="philosophy-section">
+    <div class="section-title" id="section-our-philosophy"><span class="icon">💡</span> Our Philosophy</div>
+    <div class="philosophy-banner">
+      <div class="big-quote" id="phil-quote">loading...</div>
+      <div class="explanation" id="phil-explanation"></div>
+    </div>
+  </div>
+
+  <!-- JOURNEY TIMELINE -->
+  <div class="timeline-section">
+    <div class="section-title" id="section-our-journey"><span class="icon">📅</span> Our Journey</div>
+    <div id="upcoming" style="margin-bottom:32px;"></div>
+    <div id="journey-timeline" class="timeline"></div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-section">
+    <div class="section-title" id="section-our-milestones"><span class="icon">📊</span> Our Milestones</div>
+    <div id="stats-grid" class="stats-grid"></div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="heart">🧡</div>
+    <p id="footer-voice">loading...</p>
+    <div class="sig" id="footer-sig">claude-with-me by <a href="https://github.com/mysoul7306" target="_blank" style="color:#419BFF;text-decoration:none;">rok_root</a> · Data powered by <a href="https://github.com/thedotmack" target="_blank" style="color:#f59e0b;text-decoration:none;">claude-mem</a></div>
+  </div>
+
+</div>
+
+<script>
+let appConfig = {};
+
+function applyI18nSectionTitle(elementId, icon, text) {
+  const el = document.getElementById(elementId);
+  if (el) el.innerHTML = `<span class="icon">${icon}</span> ${text}`;
+}
+
+async function loadConfig() {
+  try {
+    const res = await fetch('/api/config');
+    const cfg = await res.json();
+    appConfig = cfg;
+
+    // language
+    document.documentElement.lang = cfg.language || 'en';
+
+    // title (with template replacement)
+    const titleText = cfg.ui?.title
+      ? cfg.ui.title.replace('{{userName}}', cfg.userName)
+      : `Claude with ${cfg.userName}`;
+    document.title = titleText;
+    document.getElementById('main-title').textContent = titleText;
+
+    const avatarEmoji = document.getElementById('avatar-emoji');
+    if (avatarEmoji) avatarEmoji.textContent = cfg.avatar;
+
+    const avatarName = document.getElementById('user-name');
+    if (avatarName) avatarName.textContent = cfg.userName;
+
+    const userRole = document.getElementById('user-role');
+    if (userRole) userRole.textContent = cfg.role;
+
+    // entity-bubble user name
+    const userBubble = document.querySelector('.entity-bubble.user');
+    if (userBubble) {
+      const nameEl = userBubble.querySelector('.entity-name');
+      if (nameEl) nameEl.textContent = cfg.userName;
+    }
+
+    // footer
+    // subtitle은 relationship 로드 후 채워짐 (load 함수에서)
+
+    // accent color CSS variable update
+    if (cfg.accentColor) {
+      document.documentElement.style.setProperty('--accent-user', cfg.accentColor);
+    }
+
+    // i18n section titles
+    const ui = cfg.ui || {};
+    applyI18nSectionTitle('section-through-my-eyes', '👤', ui.sectionThroughMyEyes || 'Through My Eyes');
+    applyI18nSectionTitle('section-claude-with-me', '🔗', ui.sectionClaudeWithMe || 'Claude With Me');
+    applyI18nSectionTitle('section-our-philosophy', '💡', ui.sectionOurPhilosophy || 'Our Philosophy');
+    applyI18nSectionTitle('section-our-journey', '📅', ui.sectionOurJourney || 'Our Journey');
+    applyI18nSectionTitle('section-our-milestones', '📊', ui.sectionOurMilestones || 'Our Milestones');
+
+    return cfg;
+  } catch (err) {
+    console.error('Config load failed:', err);
+    return {};
+  }
+}
+
+async function loadAvatarDecor() {
+  const fallback = ['🚀', '⚛️', '🔧', '📦', '💻'];
+  let emojis = fallback;
+  try {
+    const res = await fetch('/api/avatar-decor');
+    const data = await res.json();
+    if (!data.error && Array.isArray(data.content)) emojis = data.content;
+  } catch { /* use fallback */ }
+  const container = document.querySelector('#avatar-orbit .avatar');
+  if (!container) return;
+  emojis.forEach((emoji, i) => {
+    const el = document.createElement('span');
+    el.className = 'avatar-decor';
+    el.textContent = emoji;
+    const count = emojis.length;
+    const startAngle = (360 / count) * i;
+    const duration = 8 + (i % 3) * 2;
+    el.style.setProperty('--orbit-start', `${startAngle}deg`);
+    el.style.setProperty('--orbit-duration', `${duration}s`);
+    el.style.setProperty('--orbit-delay', `${-duration * (i / count)}s`);
+    el.style.setProperty('--orbit-radius', '85px');
+    container.appendChild(el);
+  });
+}
+
+function renderSection(elementId, data, renderFn) {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+  if (data.error) {
+    el.innerHTML = `<div class="error-message">${data.message || appConfig.ui?.errorCli || 'Failed to connect to Claude CLI'}</div>`;
+    return;
+  }
+  renderFn(el, data);
+}
+
+async function load() {
+  try {
+    const [stats, journey, profile, relationship, philosophy, voice] = await Promise.all([
+      fetch('/api/stats').then(r => r.json()),
+      fetch('/api/journey').then(r => r.json()),
+      fetch('/api/profile').then(r => r.json()),
+      fetch('/api/relationship').then(r => r.json()),
+      fetch('/api/philosophy').then(r => r.json()),
+      fetch('/api/claude-voice').then(r => r.json()),
+    ]);
+
+    // Header meta
+    document.getElementById('header-meta').textContent =
+      `Sessions ${stats.totalSessions} · Observations ${stats.totalObservations.toLocaleString()}`;
+
+    // Profile traits
+    renderSection('profile-traits', profile, (el, data) => {
+      const traits = data.content || data;
+      const accentUser = getComputedStyle(document.documentElement).getPropertyValue('--accent-user').trim();
+      const traitColors = [accentUser,'#a6e3a1','#f59e0b','#74c7ec','#ec4899'];
+      if (Array.isArray(traits)) {
+        el.innerHTML = traits.map((t, i) =>
+          `<div class="trait" style="border-left-color:${traitColors[i % traitColors.length]}">
+            <span class="trait-icon">${t.icon}</span>
+            <div class="trait-text"><strong>${t.title}</strong> — ${t.desc}</div>
+          </div>`
+        ).join('');
+      }
+    });
+
+    // Relationship
+    if (!relationship.error) {
+      const rel = relationship.content || relationship;
+      document.getElementById('rel-claude-to-user').innerHTML =
+        `<span class="arrow" style="color:#f59e0b;">→</span> <span style="color:#f59e0b;">${rel.claudeToUser || ''}</span>`;
+      document.getElementById('rel-claude-to-user').style.textAlign = 'left';
+
+      document.getElementById('rel-user-to-claude').innerHTML =
+        `<span style="color:var(--accent-user);">${rel.userToClaude || ''}</span> <span class="arrow" style="color:var(--accent-user);">←</span>`;
+      document.getElementById('rel-user-to-claude').style.textAlign = 'right';
+
+      const bondText = (rel.bond || '');
+      document.getElementById('rel-bond').innerHTML = bondText.replace(/\n/g, '<br/>').replace(/ — /g, '<br/>');
+
+      const subtitleEl = document.getElementById('subtitle');
+      if (subtitleEl && bondText) subtitleEl.textContent = bondText.replace(/\n/g, ' — ');
+
+      const kwColors = ['orange','blue','cyan','green','pink'];
+      document.getElementById('keywords').innerHTML =
+        (rel.keywords || []).map((kw, i) =>
+          `<span class="keyword ${kwColors[i % kwColors.length]}">${kw}</span>`
+        ).join('');
+    }
+
+    renderJourney(journey);
+
+    // Philosophy
+    if (!philosophy.error) {
+      const phil = philosophy.content || philosophy;
+      const explanation = phil.explanation || '';
+      const quoteText = phil.quote || '';
+      document.getElementById('phil-quote').innerHTML = quoteText.replace(/\\n/g, '\n').replace(/\n{2,}/g, '\n').replace(/\n/g, '<br/>');
+      document.getElementById('phil-explanation').innerHTML = explanation.replace(/\\n/g, '\n').replace(/\n{2,}/g, '\n').replace(/\n/g, '<br/>');
+    }
+
+    // Stats / Milestones
+    const ui = appConfig.ui || {};
+    document.getElementById('stats-grid').innerHTML = `
+      <div class="stat-card"><div class="stat-value">${stats.totalSessions}</div><div class="stat-label">${ui.statTotalSessions || 'Sessions Together'}</div></div>
+      <div class="stat-card"><div class="stat-value">${stats.totalObservations.toLocaleString()}</div><div class="stat-label">${ui.statTotalObservations || 'Shared Memories'}</div></div>
+      <div class="stat-card"><div class="stat-value">${stats.projects.length}</div><div class="stat-label">${ui.statProjects || 'Projects'}</div></div>
+      <div class="stat-card"><div class="stat-value">${stats.daysTogether}d</div><div class="stat-label">${ui.statDaysTogether || 'Days Together'}</div></div>
+    `;
+
+    // Footer voice
+    if (!voice.error) {
+      const msg = voice.content || voice.message || voice;
+      const msgStr = typeof msg === 'string' ? msg : JSON.stringify(msg);
+      document.getElementById('footer-voice').innerHTML = msgStr.replace(/\\n/g, '\n').replace(/\n{2,}/g, '\n').replace(/\n/g, '<br/>');
+    }
+
+  } catch (err) {
+    console.error('Dashboard load failed:', err);
+  }
+}
+
+function renderJourney(journey) {
+  // TODO List
+  if (journey.todo && journey.todo.length > 0) {
+    document.getElementById('upcoming').innerHTML =
+      `<h3 style="color:#f59e0b;font-size:1.2rem;margin-bottom:16px;">📋 ${appConfig.ui?.todoTitle || 'TODO List'}</h3>` +
+      journey.todo.map(t => {
+        const badge = t.project ? `<span style="display:inline-block;padding:1px 8px;background:rgba(245,158,11,0.1);color:#f59e0b;border-radius:10px;font-size:0.7rem;margin-left:6px;">${t.project}</span>` : '';
+        return `<div style="padding:10px 14px;margin-bottom:8px;background:#111827;border:1px solid #1e293b;border-left:3px solid #f59e0b;border-radius:8px;font-size:0.88rem;color:#94a3b8;line-height:1.6;">${t.text} ${badge}</div>`;
+      }).join('');
+  } else {
+    document.getElementById('upcoming').innerHTML = '';
+  }
+
+  // History - grouped by date
+  if (journey.history && journey.history.length > 0) {
+    const grouped = {};
+    for (const t of journey.history) {
+      if (!grouped[t.date]) grouped[t.date] = [];
+      grouped[t.date].push(t);
+    }
+    document.getElementById('journey-timeline').innerHTML =
+      `<h3 style="color:var(--accent-cyan);font-size:1.2rem;margin-bottom:16px;">📜 ${appConfig.ui?.historyTitle || 'History'}</h3>` +
+      Object.entries(grouped).map(([date, items]) =>
+        `<div style="margin-bottom:24px;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:0.9rem;color:#f8fafc;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--card-border);">${date}</div>
+          ${items.map(t =>
+            `<div class="timeline-item">
+              <div class="tl-date"><span style="display:inline-block;padding:1px 8px;background:color-mix(in srgb, var(--accent-user) 10%, transparent);color:var(--accent-user);border-radius:10px;font-size:0.7rem;">${t.project}</span></div>
+              <div class="tl-title">${t.title}</div>
+              <div class="tl-desc">${t.description}</div>
+            </div>`
+          ).join('')}
+        </div>`
+      ).join('');
+  } else {
+    document.getElementById('journey-timeline').innerHTML = '';
+  }
+}
+
+async function pollJourney() {
+  try {
+    const journey = await fetch('/api/journey').then(r => r.json());
+    renderJourney(journey);
+  } catch (err) {
+    console.warn('Journey poll failed:', err);
+  }
+}
+
+loadConfig().then(() => {
+  load();
+  loadAvatarDecor();
+});
+
+// Journey 30초마다 자동 갱신
+setInterval(pollJourney, 30000);
+
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2, '0');
+  const m = String(now.getMinutes()).padStart(2, '0');
+  const s = String(now.getSeconds()).padStart(2, '0');
+  document.getElementById('header-clock').textContent = `${h}:${m}:${s}`;
+}
+updateClock();
+setInterval(updateClock, 1000);
+</script>
+
+</body>
+</html>
