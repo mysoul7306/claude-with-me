@@ -7,6 +7,7 @@
   "language": "en",
   "journey": {
     "todoLimit": 10,
+    "todoTtlDays": 14,
     "historyLimit": 20
   },
   "claude": {
