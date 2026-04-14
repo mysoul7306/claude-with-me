@@ -29,11 +29,18 @@
       "세션 완료", "세션 종료", "추가 작업 없음", "대기 중", "대기중",
       "결정 대기", "확인 대기", "답변에 따라",
       "요청이 완료된", "단발성 요청", "후속 요청 대기",
-      "Waiting for", "Session is ending", "No follow-up",
-      "No active work", "No further work", "No further active work",
+      "Waiting for", "Session is ending", "Session is wrapping",
+      "Session is closing", "Session is paused", "Session is complete",
+      "No follow-up", "No active work", "No further work", "No further active work",
       "session was a brief", "Session appears complete",
       "Session appears to be", "Nothing shipped yet",
-      "User was asked", "User needs to clarify"
+      "User was asked", "User needs to clarify",
+      "Continue work in the next", "Awaiting results",
+      "Cleanup session is complete", "specific topics TBD",
+      "세션 종료됨", "다음 세션에서", "선택 대기", "결정 대기 중",
+      "추가 작업 여부 확인", "작업 대기 상태", "세션 정리",
+      "No active next steps", "No further steps",
+      "single-turn", "session concluded", "fully completed"
     ]
   }
 }

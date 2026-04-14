@@ -29,11 +29,16 @@
       "Session complete", "Session ended", "No additional work", "Waiting", "Pending",
       "Decision pending", "Confirmation pending", "Depending on answer",
       "Request completed", "One-off request", "Awaiting follow-up",
-      "Waiting for", "Session is ending", "No follow-up",
-      "No active work", "No further work", "No further active work",
+      "Waiting for", "Session is ending", "Session is wrapping",
+      "Session is closing", "Session is paused", "Session is complete",
+      "No follow-up", "No active work", "No further work", "No further active work",
       "session was a brief", "Session appears complete",
       "Session appears to be", "Nothing shipped yet",
-      "User was asked", "User needs to clarify"
+      "User was asked", "User needs to clarify",
+      "Continue work in the next", "Awaiting results",
+      "Cleanup session is complete", "specific topics TBD",
+      "No active next steps", "No further steps",
+      "single-turn", "session concluded", "fully completed"
     ]
   }
 }
