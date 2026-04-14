@@ -83,6 +83,7 @@ wsl --install
 | `language` | 대시보드 언어 (`en` / `ko`) | `"en"` |
 | `accentColor` | 테마 색상 (hex). 미지정 시 Claude가 추천 | `"#419BFF"` |
 | `journey.todoLimit` | TODO 표시 개수 | `10` |
+| `journey.todoTtlDays` | N일 이상 된 TODO 자동 만료 | `14` |
 | `journey.historyLimit` | History 표시 개수 | `20` |
 | `claude.model` | Claude 모델 (`opus` / `sonnet`) | `"opus"` |
 | `claude.cliPath` | Claude CLI 경로 | `"claude"` |

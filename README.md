@@ -83,6 +83,7 @@ Open `config.json` to customize:
 | `language` | Dashboard language (`en` / `ko`) | `"en"` |
 | `accentColor` | Theme color (hex). Claude suggests one if omitted | `"#419BFF"` |
 | `journey.todoLimit` | TODOs to display | `10` |
+| `journey.todoTtlDays` | Auto-expire TODOs older than N days | `14` |
 | `journey.historyLimit` | History entries to display | `20` |
 | `claude.model` | Claude model (`opus` / `sonnet`) | `"opus"` |
 | `claude.cliPath` | Path to Claude CLI | `"claude"` |
