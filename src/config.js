@@ -9,7 +9,7 @@ const DEFAULTS = {
   port: 3000,
   accentColor: null,
   language: "en",
-  journey: { todoLimit: 10, historyLimit: 20 },
+  journey: { todoLimit: 10, todoTtlDays: 14, historyLimit: 20 },
   claude: { model: "opus", cliPath: "claude" },
 };
 
@@ -38,6 +38,7 @@ function loadConfig() {
     language: raw.language ?? DEFAULTS.language,
     journey: {
       todoLimit: raw.journey?.todoLimit ?? DEFAULTS.journey.todoLimit,
+      todoTtlDays: raw.journey?.todoTtlDays ?? DEFAULTS.journey.todoTtlDays,
       historyLimit: raw.journey?.historyLimit ?? DEFAULTS.journey.historyLimit,
     },
     claude: {
