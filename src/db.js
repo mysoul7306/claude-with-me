@@ -218,9 +218,13 @@ export function getJourney() {
         .map((l) => l.replace(/^[\s\-*]+/, "").trim())
         .filter((l) => l.length > 5);
 
+      const date = r.created_at_epoch
+        ? new Date(r.created_at_epoch).toISOString().split("T")[0]
+        : "unknown";
+
       if (currentIdx == null || lines.length === 0) {
         return lines.length > 0
-          ? [{ text: r.next_steps, project: r.project || "General" }]
+          ? [{ text: r.next_steps, project: r.project || "General", date }]
           : [];
       }
 
@@ -229,7 +233,7 @@ export function getJourney() {
         .map((s) => s.memory_session_id);
 
       if (nextSessions.length === 0) {
-        return [{ text: r.next_steps, project: r.project || "General" }];
+        return [{ text: r.next_steps, project: r.project || "General", date }];
       }
 
       const placeholders = nextSessions.map(() => "?").join(",");
@@ -252,25 +256,45 @@ export function getJourney() {
       });
 
       if (remainingLines.length === 0) return [];
-      return [{ text: remainingLines.join("\n"), project: r.project || "General" }];
+      return [{ text: remainingLines.join("\n"), project: r.project || "General", date }];
     })
     .slice(0, config.journey.todoLimit);
 
   const history = db
     .prepare(
-      `SELECT s.project, s.request, s.investigated, s.completed,
-              s.created_at, s.created_at_epoch
-      FROM session_summaries s
-      INNER JOIN (
-        SELECT memory_session_id, MIN(created_at_epoch) as min_epoch
-        FROM session_summaries
-        GROUP BY memory_session_id
-      ) first ON s.memory_session_id = first.memory_session_id
-        AND s.created_at_epoch = first.min_epoch
-      WHERE (s.project IS NULL OR s.project != 'Workspaces')
-        AND s.completed IS NOT NULL AND s.completed != ''
-      ORDER BY s.created_at_epoch DESC
-      LIMIT ${config.journey.historyLimit}`
+      `SELECT
+         COALESCE(first.project, comp.project) as project,
+         first.request, first.investigated,
+         comp.completed, comp.created_at, comp.created_at_epoch
+       FROM (
+         SELECT memory_session_id, project, request, investigated,
+                MIN(created_at_epoch) as min_epoch
+         FROM session_summaries
+         WHERE (project IS NULL OR project != 'Workspaces')
+         GROUP BY memory_session_id
+       ) first
+       INNER JOIN (
+         SELECT memory_session_id, project, completed,
+                created_at, created_at_epoch,
+                ROW_NUMBER() OVER (
+                  PARTITION BY memory_session_id
+                  ORDER BY created_at_epoch ASC
+                ) as rn
+         FROM session_summaries
+         WHERE completed IS NOT NULL AND completed != ''
+       ) comp ON first.memory_session_id = comp.memory_session_id
+         AND comp.rn = 1
+       WHERE first.memory_session_id NOT IN (
+         SELECT memory_session_id FROM sdk_sessions
+         WHERE status = 'active' AND memory_session_id IS NOT NULL
+       )
+       AND first.memory_session_id NOT IN (
+         SELECT memory_session_id FROM session_summaries
+         WHERE created_at_epoch >= ${Date.now() - 10 * 60 * 1000}
+         GROUP BY memory_session_id
+       )
+       ORDER BY first.min_epoch DESC
+       LIMIT ${config.journey.historyLimit}`
     )
     .all()
     .map((r) => ({
