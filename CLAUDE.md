@@ -50,6 +50,7 @@ npm start              # node server.js (production)
 
 Key settings:
 - `userName`, `role`, `avatar` — Dashboard display info
+- `accentColor` — User accent color applied to avatar, role label, journey line
 - `journey.todoTtlDays` — Auto-expire TODOs older than N days (default 14)
 - `claude.model` — AI generation model (`opus` / `sonnet`)
 - `claudeMem.disableReadCache` — Disable file-read caching hook
