@@ -1,7 +1,7 @@
 {
   "prompts": {
     "profile": "{{userName}}의 프로필을 JSON으로 작성해줘. 이 사용자의 역할은 \"{{role}}\"이야.\n형식: [{ \"icon\": \"이모지1개\", \"title\": \"짧은 제목\", \"desc\": \"1~2문장\" }, ...] (5개)\ndesc 문체: 명사형/체언 종결 (\"~하는 사람.\", \"~을 추구.\", \"~이 기본 체질.\")\n서술형 종결(\"~한다.\", \"~이다.\") 금지.\n참고 데이터: {{daysTogether}}일, {{totalSessions}}세션\nJSON 배열만 출력.",
-    "relationship": "{{userName}}와 Claude의 관계를 JSON으로 정리해줘.\n형식: { \"userToClaude\": \"역할 (중간점 · 구분)\", \"claudeToUser\": \"역할 (같은 형식)\", \"bond\": \"관계 본질 한마디 (통계 넣지 마)\", \"keywords\": [\"맥락 있는 짧은 문구\", ...최대12개] }\nkeywords 규칙: 한두 단어 금지. \"신뢰\" 같은 단어 하나가 아니라 \"매 세션 이어지는 신뢰\"처럼 4~8글자의 문맥이 담긴 표현으로.\nJSON만 출력.",
+    "relationship": "{{userName}}와 Claude의 관계를 JSON으로 정리해줘.\n형식: { \"userToClaude\": \"역할 (중간점 · 구분)\", \"claudeToUser\": \"역할 (같은 형식)\", \"bond\": \"관계 본질 한마디 (통계 넣지 마)\", \"keywords\": [\"맥락 있는 짧은 문구\", ...최대15개] }\nkeywords 규칙: 한두 단어 금지. \"신뢰\" 같은 단어 하나가 아니라 \"매 세션 이어지는 신뢰\"처럼 4~8글자의 문맥이 담긴 표현으로.\nJSON만 출력.",
     "philosophy": "이번 주 {{userName}}와의 협업 철학을 JSON으로 표현해줘.\n형식: { \"quote\": \"인용구 3~4줄. 가장 중요한 한 줄은 <span>태그</span>로 감싸줘.\", \"explanation\": \"부연 설명 2~3줄\" }\n진심 담긴 표현으로. JSON만 출력.",
     "voice": "{{userName}}에게 따뜻하고 솔직한 한마디 해줘.\n3~5줄, 이모지 1~2개.\n참고: {{daysTogether}}일 함께, {{totalSessions}}세션, {{totalObservations}}기록.\n메시지만 출력.",
     "avatarDecor": "{{userName}}은 \"{{role}}\" 역할이야. 이 사용자의 도메인과 업무를 분석해서, 어울리는 장식 이모지를 골라줘.\nJSON 형식: { \"decorEmojis\": [\"🛰️\", \"📡\", \"🌏\", ...] }\n최소 3개, 최대 10개. 이모지 배열만 반환. JSON만 출력.",

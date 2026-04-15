@@ -20,9 +20,41 @@
     --accent-green: #10b981;
     --accent-pink: #ec4899;
     --accent-cyan: #06b6d4;
+    --accent-yellow: #eab308;
     --text: #e2e8f0;
     --text-dim: #94a3b8;
     --text-bright: #f8fafc;
+    --avatar-orbit-size: 260px;
+    --avatar-size: 160px;
+    --avatar-font: 4rem;
+    --decor-font: 1.4rem;
+  }
+
+  @media (max-width: 480px) {
+    :root {
+      --avatar-orbit-size: 200px;
+      --avatar-size: 120px;
+      --avatar-font: 3rem;
+      --decor-font: 1.1rem;
+    }
+  }
+
+  @media (min-width: 481px) and (max-width: 768px) {
+    :root {
+      --avatar-orbit-size: 230px;
+      --avatar-size: 140px;
+      --avatar-font: 3.5rem;
+      --decor-font: 1.2rem;
+    }
+  }
+
+  @media (min-width: 1440px) {
+    :root {
+      --avatar-orbit-size: 300px;
+      --avatar-size: 180px;
+      --avatar-font: 4.5rem;
+      --decor-font: 1.6rem;
+    }
   }
 
   body {
@@ -134,31 +166,32 @@
 
   .avatar-orbit {
     position: relative;
-    width: 220px;
-    height: 220px;
+    width: var(--avatar-orbit-size);
+    height: var(--avatar-orbit-size);
     display: flex;
     align-items: center;
     justify-content: center;
   }
 
   .avatar {
-    width: 160px;
-    height: 160px;
+    width: var(--avatar-size);
+    height: var(--avatar-size);
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--accent-orange), var(--accent-pink));
+    background: linear-gradient(135deg, var(--accent-user), color-mix(in srgb, var(--accent-user) 75%, black));
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 4rem;
+    font-size: var(--avatar-font);
     position: relative;
     overflow: visible;
-    box-shadow: 0 0 40px rgba(245,158,11,0.2);
+    box-shadow: 0 0 40px color-mix(in srgb, var(--accent-user) 25%, transparent);
   }
 
-  @keyframes orbit {
-    0% { transform: rotate(0deg) translateX(10px) rotate(0deg); }
-    100% { transform: rotate(360deg) translateX(10px) rotate(-360deg); }
+  .avatar > span {
+    position: relative;
+    z-index: 3;
   }
+
 
   .avatar-name {
     font-size: 1.4rem;
@@ -168,7 +201,7 @@
 
   .avatar-role {
     font-size: 0.85rem;
-    color: var(--accent-orange);
+    color: var(--accent-user);
     font-weight: 500;
   }
 
@@ -267,7 +300,9 @@
     font-size: 0.75rem;
     color: var(--text-dim);
     text-align: center;
-    max-width: 140px;
+    max-width: 180px;
+    line-height: 1.6;
+    margin-top: 4px;
   }
 
   /* ===== KEYWORD CLOUD ===== */
@@ -277,6 +312,19 @@
     gap: 10px;
     justify-content: center;
     margin-bottom: 40px;
+  }
+
+  @media (max-width: 480px) {
+    .keywords {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      justify-content: flex-start;
+      padding-bottom: 8px;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .keywords::-webkit-scrollbar { display: none; }
+    .keyword { flex-shrink: 0; }
   }
 
   .keyword {
@@ -317,7 +365,7 @@
   }
 
   .philosophy-banner .big-quote {
-    font-size: 2.4rem;
+    font-size: 2rem;
     font-weight: 700;
     color: var(--text-bright);
     margin-bottom: 20px;
@@ -332,7 +380,7 @@
   }
 
   .philosophy-banner .explanation {
-    font-size: 1.15rem;
+    font-size: 0.95rem;
     color: var(--text-dim);
     max-width: 800px;
     margin: 0 auto;
@@ -433,7 +481,7 @@
   }
 
   .stat-card:nth-child(1) .stat-value { color: var(--accent-blue); }
-  .stat-card:nth-child(2) .stat-value { color: var(--accent-user); }
+  .stat-card:nth-child(2) .stat-value { color: var(--accent-yellow); }
   .stat-card:nth-child(3) .stat-value { color: var(--accent-orange); }
   .stat-card:nth-child(4) .stat-value { color: var(--accent-green); }
   .stat-card:nth-child(5) .stat-value { color: var(--accent-pink); }
@@ -447,30 +495,92 @@
   /* ===== FOOTER ===== */
   .footer {
     text-align: center;
-    margin-top: 80px;
-    padding-top: 32px;
+    margin-top: 48px;
+    padding-top: 24px;
     border-top: 1px solid var(--card-border);
   }
 
-  .footer .heart {
-    font-size: 2rem;
-    margin-bottom: 12px;
-    animation: pulse 2s ease-in-out infinite;
+  .footer-journey {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 20px;
+    overflow-x: auto;
+    padding: 8px 0;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .footer-journey::-webkit-scrollbar { display: none; }
+
+  .footer-journey .journey-track {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    min-width: max-content;
   }
 
-  @keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.15); }
+  .footer-journey .journey-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .footer-journey .journey-node .node-emoji {
+    font-size: 1.4rem;
+    animation: float-node 3s ease-in-out infinite;
+  }
+
+  .footer-journey .journey-node .node-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+
+  .footer-journey .journey-line {
+    width: 130px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent-blue), var(--accent-user));
+    flex-shrink: 0;
+    position: relative;
+    opacity: 0.5;
+  }
+
+  .footer-journey .journey-line.active {
+    opacity: 1;
+    background: linear-gradient(90deg, var(--accent-user), color-mix(in srgb, var(--accent-user) 60%, var(--accent-pink)));
+    box-shadow: 0 0 8px color-mix(in srgb, var(--accent-user) 30%, transparent);
+  }
+
+  .footer-journey .journey-rocket {
+    font-size: 1.6rem;
+    flex-shrink: 0;
+    animation: rocket-fly 2.5s ease-in-out infinite;
+  }
+
+  @keyframes float-node {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+  }
+
+  @keyframes rocket-fly {
+    0%, 100% { transform: translateX(0) rotate(-10deg); }
+    50% { transform: translateX(4px) rotate(0deg); }
   }
 
   .footer p {
     color: var(--text-dim);
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     line-height: 1.8;
+    max-width: 700px;
+    margin: 0 auto;
   }
 
   .footer .sig {
-    margin-top: 16px;
+    margin-top: 12px;
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.75rem;
     color: rgba(148, 163, 184, 0.4);
@@ -479,17 +589,36 @@
   /* ===== AVATAR DECOR (원형 orbit, 최대 10개) ===== */
   .avatar-decor {
     position: absolute;
-    font-size: 1.4rem;
-    z-index: 2;
-    top: 50%;
-    left: 50%;
-    margin: -0.7rem;
-    animation: orbit-decor var(--orbit-duration, 8s) linear infinite;
+    width: var(--decor-font);
+    height: var(--decor-font);
+    font-size: var(--decor-font);
+    line-height: 1;
+    text-align: center;
+    z-index: 1;
+  }
+  .avatar-decor.inner {
+    top: var(--decor-top);
+    left: var(--decor-left);
+    opacity: 0.75;
+    animation: float-decor var(--float-duration, 4s) ease-in-out infinite;
+    animation-delay: var(--float-delay, 0s);
+  }
+  .avatar-decor.outer {
+    top: calc(50% - var(--decor-font) / 2);
+    left: calc(50% - var(--decor-font) / 2);
+    opacity: 0.65;
+    animation: orbit-decor var(--orbit-duration, 20s) linear infinite;
     animation-delay: var(--orbit-delay, 0s);
   }
+  @keyframes float-decor {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    25% { transform: translate(var(--float-x, 3px), var(--float-y, -4px)) scale(1.05); }
+    50% { transform: translate(calc(var(--float-x, 3px) * -0.5), calc(var(--float-y, -4px) * 1.2)) scale(0.97); }
+    75% { transform: translate(calc(var(--float-x, 3px) * -1), calc(var(--float-y, -4px) * -0.5)) scale(1.02); }
+  }
   @keyframes orbit-decor {
-    0% { transform: rotate(var(--orbit-start, 0deg)) translateX(var(--orbit-radius, 70px)) rotate(calc(-1 * var(--orbit-start, 0deg))); }
-    100% { transform: rotate(calc(var(--orbit-start, 0deg) + 360deg)) translateX(var(--orbit-radius, 70px)) rotate(calc(-1 * (var(--orbit-start, 0deg) + 360deg))); }
+    from { transform: rotate(var(--orbit-start, 0deg)) translateX(var(--orbit-radius, 100px)) rotate(calc(-1 * var(--orbit-start, 0deg))); }
+    to { transform: rotate(calc(var(--orbit-start, 0deg) + 360deg)) translateX(var(--orbit-radius, 100px)) rotate(calc(-1 * (var(--orbit-start, 0deg) + 360deg))); }
   }
 
   /* ===== ERROR MESSAGE ===== */
@@ -514,7 +643,7 @@
     .relationship-visual { flex-direction: column; }
     .connection { transform: rotate(90deg); }
     .philosophy-banner { padding: 28px; }
-    .philosophy-banner .big-quote { font-size: 1.6rem; }
+    .philosophy-banner .big-quote { font-size: 1.4rem; }
   }
 </style>
 </head>
@@ -543,7 +672,7 @@
         <div class="avatar-name" id="user-name"></div>
         <div class="avatar-role" id="user-role"></div>
       </div>
-      <div id="profile-traits" class="profile-traits"></div>
+      <div id="profile-traits" class="profile-traits">loading...</div>
     </div>
   </div>
 
@@ -567,7 +696,7 @@
       </div>
     </div>
 
-    <div id="keywords" class="keywords"></div>
+    <div id="keywords" class="keywords">loading...</div>
   </div>
 
   <!-- PHILOSOPHY -->
@@ -582,19 +711,19 @@
   <!-- JOURNEY TIMELINE -->
   <div class="timeline-section">
     <div class="section-title" id="section-our-journey"><span class="icon">📅</span> Our Journey</div>
-    <div id="upcoming" style="margin-bottom:32px;"></div>
-    <div id="journey-timeline" class="timeline"></div>
+    <div id="upcoming" style="margin-bottom:32px;">loading...</div>
+    <div id="journey-timeline" class="timeline">loading...</div>
   </div>
 
   <!-- STATS -->
   <div class="stats-section">
     <div class="section-title" id="section-our-milestones"><span class="icon">📊</span> Our Milestones</div>
-    <div id="stats-grid" class="stats-grid"></div>
+    <div id="stats-grid" class="stats-grid">loading...</div>
   </div>
 
   <!-- FOOTER -->
   <div class="footer">
-    <div class="heart">🧡</div>
+    <div class="footer-journey" id="footer-journey"></div>
     <p id="footer-voice">loading...</p>
     <div class="sig" id="footer-sig">claude-with-me by <a href="https://github.com/mysoul7306" target="_blank" style="color:#419BFF;text-decoration:none;">rok_root</a> · Data powered by <a href="https://github.com/thedotmack" target="_blank" style="color:#f59e0b;text-decoration:none;">claude-mem</a></div>
   </div>
@@ -670,21 +799,49 @@ async function loadAvatarDecor() {
   try {
     const res = await fetch('/api/avatar-decor');
     const data = await res.json();
-    if (!data.error && Array.isArray(data.content)) emojis = data.content;
+    const arr = data.content?.decorEmojis ?? data.content;
+    if (!data.error && Array.isArray(arr)) emojis = arr;
   } catch { /* use fallback */ }
-  const container = document.querySelector('#avatar-orbit .avatar');
+  const container = document.getElementById('avatar-orbit');
   if (!container) return;
-  emojis.forEach((emoji, i) => {
+  const half = Math.ceil(emojis.length / 2);
+  const innerEmojis = emojis.slice(0, half);
+  const outerEmojis = emojis.slice(half);
+
+  const orbitSize = container.offsetWidth;
+  const center = orbitSize / 2;
+  const avatarEl = container.querySelector('.avatar');
+  const avatarR = avatarEl ? avatarEl.offsetWidth / 2 : 80;
+  const emojiHalf = avatarR * 0.07;
+  const innerR = avatarR * 0.85;
+  const outerR = avatarR * 1.1;
+
+  innerEmojis.forEach((emoji, i) => {
     const el = document.createElement('span');
-    el.className = 'avatar-decor';
+    el.className = 'avatar-decor inner';
     el.textContent = emoji;
-    const count = emojis.length;
-    const startAngle = (360 / count) * i;
-    const duration = 8 + (i % 3) * 2;
+    const angle = (2 * Math.PI / innerEmojis.length) * i - Math.PI / 2;
+    const x = center + innerR * Math.cos(angle) - emojiHalf;
+    const y = center + innerR * Math.sin(angle) - emojiHalf;
+    el.style.setProperty('--decor-top', `${y}px`);
+    el.style.setProperty('--decor-left', `${x}px`);
+    el.style.setProperty('--float-duration', `${3 + (i % 4) * 1.5}s`);
+    el.style.setProperty('--float-delay', `${-i * 0.8}s`);
+    el.style.setProperty('--float-x', `${5 + (i % 4) * 2}px`);
+    el.style.setProperty('--float-y', `${-6 - (i % 4) * 2}px`);
+    container.appendChild(el);
+  });
+
+  outerEmojis.forEach((emoji, i) => {
+    const el = document.createElement('span');
+    el.className = 'avatar-decor outer';
+    el.textContent = emoji;
+    const startAngle = (360 / outerEmojis.length) * i;
+    const duration = 20 + i * 3;
     el.style.setProperty('--orbit-start', `${startAngle}deg`);
+    el.style.setProperty('--orbit-radius', `${outerR}px`);
     el.style.setProperty('--orbit-duration', `${duration}s`);
-    el.style.setProperty('--orbit-delay', `${-duration * (i / count)}s`);
-    el.style.setProperty('--orbit-radius', '85px');
+    el.style.setProperty('--orbit-delay', `${-duration * (i / outerEmojis.length)}s`);
     container.appendChild(el);
   });
 }
@@ -747,8 +904,9 @@ async function load() {
       if (subtitleEl && bondText) subtitleEl.textContent = bondText.replace(/\n/g, ' — ');
 
       const kwColors = ['orange','blue','cyan','green','pink'];
+      const kwLimit = window.innerWidth <= 480 ? 8 : 15;
       document.getElementById('keywords').innerHTML =
-        (rel.keywords || []).map((kw, i) =>
+        (rel.keywords || []).slice(0, kwLimit).map((kw, i) =>
           `<span class="keyword ${kwColors[i % kwColors.length]}">${kw}</span>`
         ).join('');
     }
@@ -773,11 +931,46 @@ async function load() {
       <div class="stat-card"><div class="stat-value">${stats.daysTogether}d</div><div class="stat-label">${ui.statDaysTogether || 'Days Together'}</div></div>
     `;
 
-    // Footer voice
+    // Footer journey bar
+    const milestones = [
+      { emoji: '🤝', label: 'Day 1' },
+      { emoji: '💬', label: `${Math.floor(stats.totalSessions * 0.25)}s` },
+      { emoji: '🧠', label: `${Math.floor(stats.totalObservations * 0.5).toLocaleString()} obs` },
+      { emoji: '🔧', label: `${stats.projects.length} proj` },
+      { emoji: '🏔️', label: `${stats.daysTogether}d` },
+    ];
+    const journeyEl = document.getElementById('footer-journey');
+    if (journeyEl) {
+      const track = document.createElement('div');
+      track.className = 'journey-track';
+      milestones.forEach((m, i) => {
+        const node = document.createElement('div');
+        node.className = 'journey-node';
+        node.innerHTML = `<span class="node-emoji" style="animation-delay:${i * 0.4}s">${m.emoji}</span><span class="node-label">${m.label}</span>`;
+        track.appendChild(node);
+        if (i < milestones.length - 1) {
+          const line = document.createElement('div');
+          line.className = 'journey-line active';
+          track.appendChild(line);
+        }
+      });
+      const rocket = document.createElement('span');
+      rocket.className = 'journey-rocket';
+      rocket.textContent = '🚀';
+      track.appendChild(rocket);
+      journeyEl.appendChild(track);
+    }
+
+    // Footer voice — sync daysTogether with live stats
     if (!voice.error) {
       const msg = voice.content || voice.message || voice;
       const msgStr = typeof msg === 'string' ? msg : JSON.stringify(msg);
-      document.getElementById('footer-voice').innerHTML = msgStr.replace(/\\n/g, '\n').replace(/\n{2,}/g, '\n').replace(/\n/g, '<br/>');
+      const synced = msgStr.replace(/\d+일/g, (match) => {
+        const n = parseInt(match);
+        const diff = Math.abs(n - stats.daysTogether);
+        return diff <= 2 ? `${stats.daysTogether}일` : match;
+      });
+      document.getElementById('footer-voice').innerHTML = synced.replace(/\\n/g, '\n').replace(/\n{2,}/g, '\n').replace(/\n/g, '<br/>');
     }
 
   } catch (err) {

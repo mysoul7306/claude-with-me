@@ -38,6 +38,7 @@ function loadConfig() {
     language: raw.language ?? DEFAULTS.language,
     journey: {
       todoLimit: raw.journey?.todoLimit ?? DEFAULTS.journey.todoLimit,
+      todoTtlDays: raw.journey?.todoTtlDays ?? 14,
       historyLimit: raw.journey?.historyLimit ?? DEFAULTS.journey.historyLimit,
     },
     claude: {
