@@ -137,6 +137,16 @@
     align-items: center;
     gap: 12px;
   }
+  .section-meta {
+    font-size: 0.7rem;
+    font-weight: 400;
+    color: #64748b;
+    opacity: 0.75;
+    letter-spacing: 0.02em;
+  }
+  .section-meta .meta-model {
+    color: #94a3b8;
+  }
 
   .section-title .icon {
     font-size: 1.8rem;
@@ -661,7 +671,7 @@
 
   <!-- WHO IS ROK -->
   <div class="profile-section">
-    <div class="section-title" id="section-through-my-eyes"><span class="icon">👤</span> Through My Eyes</div>
+    <div class="section-title" id="section-through-my-eyes"><span class="icon">👤</span> Through My Eyes <span class="section-meta" id="profile-meta"></span></div>
     <div class="profile-card">
       <div class="avatar-area">
         <div class="avatar-orbit" id="avatar-orbit">
@@ -678,7 +688,7 @@
 
   <!-- RELATIONSHIP -->
   <div class="relationship-section">
-    <div class="section-title" id="section-claude-with-me"><span class="icon">🔗</span> Claude With Me</div>
+    <div class="section-title" id="section-claude-with-me"><span class="icon">🔗</span> Claude With Me <span class="section-meta" id="relationship-meta"></span></div>
 
     <div class="relationship-visual">
       <div class="entity-bubble claude">
@@ -701,7 +711,7 @@
 
   <!-- PHILOSOPHY -->
   <div class="philosophy-section">
-    <div class="section-title" id="section-our-philosophy"><span class="icon">💡</span> Our Philosophy</div>
+    <div class="section-title" id="section-our-philosophy"><span class="icon">💡</span> Our Philosophy <span class="section-meta" id="philosophy-meta"></span></div>
     <div class="philosophy-banner">
       <div class="big-quote" id="phil-quote">loading...</div>
       <div class="explanation" id="phil-explanation"></div>
@@ -710,8 +720,7 @@
 
   <!-- JOURNEY TIMELINE -->
   <div class="timeline-section">
-    <div class="section-title" id="section-our-journey"><span class="icon">📅</span> Our Journey</div>
-    <div id="upcoming" style="margin-bottom:32px;">loading...</div>
+    <div class="section-title" id="section-our-journey"><span class="icon">📅</span> Our Journey <span class="section-meta" id="journey-meta"></span></div>
     <div id="journey-timeline" class="timeline">loading...</div>
   </div>
 
@@ -856,6 +865,29 @@ function renderSection(elementId, data, renderFn) {
   renderFn(el, data);
 }
 
+function timeAgo(isoString) {
+  if (!isoString) return '';
+  const diff = Date.now() - new Date(isoString).getTime();
+  if (diff < 0) return 'just now';
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return 'just now';
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const days = Math.floor(hr / 24);
+  return `${days}d ago`;
+}
+
+function setSectionMeta(metaId, data) {
+  const el = document.getElementById(metaId);
+  if (!el) return;
+  if (!data || data.error) { el.textContent = ''; return; }
+  const parts = [];
+  if (data.generatedBy) parts.push(`<span class="meta-model">✨ ${data.generatedBy}</span>`);
+  if (data.generatedAt) parts.push(timeAgo(data.generatedAt));
+  el.innerHTML = parts.length ? `· ${parts.join(' · ')}` : '';
+}
+
 async function load() {
   try {
     const [stats, journey, profile, relationship, philosophy, voice] = await Promise.all([
@@ -912,6 +944,12 @@ async function load() {
     }
 
     renderJourney(journey);
+
+    // Section meta (AI model + last refreshed)
+    setSectionMeta('profile-meta', profile);
+    setSectionMeta('relationship-meta', relationship);
+    setSectionMeta('philosophy-meta', philosophy);
+    setSectionMeta('journey-meta', journey);
 
     // Philosophy
     if (!philosophy.error) {
@@ -979,18 +1017,15 @@ async function load() {
 }
 
 function renderJourney(journey) {
-  // TODO List
-  if (journey.todo && journey.todo.length > 0) {
-    document.getElementById('upcoming').innerHTML =
-      `<h3 style="color:#f59e0b;font-size:1.2rem;margin-bottom:16px;">📋 ${appConfig.ui?.todoTitle || 'TODO List'}</h3>` +
-      journey.todo.map(t => {
-        const badge = t.project ? `<span style="display:inline-block;padding:1px 8px;background:rgba(245,158,11,0.1);color:#f59e0b;border-radius:10px;font-size:0.7rem;margin-left:6px;">${t.project}</span>` : '';
-        const dateBadge = t.date && t.date !== 'unknown' ? `<span style="display:inline-block;padding:1px 8px;background:rgba(100,116,139,0.1);color:#64748b;border-radius:10px;font-size:0.65rem;margin-left:6px;">${t.date}</span>` : '';
-        return `<div style="padding:10px 14px;margin-bottom:8px;background:#111827;border:1px solid #1e293b;border-left:3px solid #f59e0b;border-radius:8px;font-size:0.88rem;color:#94a3b8;line-height:1.6;">${t.text} ${badge}${dateBadge}</div>`;
-      }).join('');
-  } else {
-    document.getElementById('upcoming').innerHTML = '';
-  }
+  // Observations type badge config
+  const TYPE_BADGES = {
+    bugfix:    { emoji: '🐛', color: '#ef4444' },
+    feature:   { emoji: '🟣', color: '#f59e0b' },
+    change:    { emoji: '✅', color: '#22c55e' },
+    discovery: { emoji: '🔵', color: '#3b82f6' },
+    decision:  { emoji: '⚖️', color: '#06b6d4' },
+    refactor:  { emoji: '🔄', color: '#a855f7' },
+  };
 
   // History - grouped by date
   if (journey.history && journey.history.length > 0) {
@@ -1004,13 +1039,25 @@ function renderJourney(journey) {
       Object.entries(grouped).map(([date, items]) =>
         `<div style="margin-bottom:24px;">
           <div style="font-family:'JetBrains Mono',monospace;font-size:0.9rem;color:#f8fafc;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--card-border);">${date}</div>
-          ${items.map(t =>
-            `<div class="timeline-item">
-              <div class="tl-date"><span style="display:inline-block;padding:1px 8px;background:color-mix(in srgb, var(--accent-user) 10%, transparent);color:var(--accent-user);border-radius:10px;font-size:0.7rem;">${t.project}</span></div>
+          ${items.map(t => {
+            const projLabel = t.projectEmoji ? `${t.projectEmoji} ${t.project}` : t.project;
+            const typeBadges = (t.types || [])
+              .map(type => {
+                const badge = TYPE_BADGES[type];
+                if (!badge) return '';
+                return `<span style="display:inline-block;padding:2px 8px;background:${badge.color}15;color:${badge.color};border-radius:12px;font-size:0.65rem;">${badge.emoji} ${type}</span>`;
+              })
+              .filter(Boolean)
+              .join(' ');
+            return `<div class="timeline-item">
+              <div class="tl-date" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                <span style="display:inline-block;padding:1px 8px;background:color-mix(in srgb, var(--accent-user) 10%, transparent);color:var(--accent-user);border-radius:10px;font-size:0.7rem;">${projLabel}</span>
+                ${typeBadges}
+              </div>
               <div class="tl-title">${t.title}</div>
               <div class="tl-desc">${t.description}</div>
-            </div>`
-          ).join('')}
+            </div>`;
+          }).join('')}
         </div>`
       ).join('');
   } else {
@@ -1022,6 +1069,7 @@ async function pollJourney() {
   try {
     const journey = await fetch('/api/journey').then(r => r.json());
     renderJourney(journey);
+    setSectionMeta('journey-meta', journey);
   } catch (err) {
     console.warn('Journey poll failed:', err);
   }

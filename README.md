@@ -82,10 +82,11 @@ Open `config.json` to customize:
 | `port` | Server port | `3000` |
 | `language` | Dashboard language (`en` / `ko`) | `"en"` |
 | `accentColor` | Theme color (hex). Claude suggests one if omitted | `"#419BFF"` |
-| `journey.todoLimit` | TODOs to display | `10` |
-| `journey.todoTtlDays` | Auto-expire TODOs older than N days | `14` |
 | `journey.historyLimit` | History entries to display | `20` |
-| `claude.model` | Claude model (`opus` / `sonnet`) | `"opus"` |
+| `journey.excludedProjectNames` | Project names filtered as noise | `["Workspaces", "Workspace", "observer-sessions"]` |
+| `journey.weekStartDay` | Day of week for weekly cache refresh (0=Sun, 1=Mon) | `1` |
+| `journey.refreshIntervalMin` | History refresh interval in minutes | `60` |
+| `claude.modelPriority` | Models tried in order; fallback only on operational failure | `["opus", "sonnet"]` |
 | `claude.cliPath` | Path to Claude CLI | `"claude"` |
 
 ### claude-mem Integration
@@ -157,7 +158,7 @@ claude-mem DB ──> Express API ──> Claude CLI ──> Dashboard
 ```
 
 1. **claude-mem** records Claude Code sessions into a SQLite DB
-2. **Server** reads the DB for stats, TODOs, and history
+2. **Server** reads the DB for stats and history
 3. **Claude CLI** dynamically generates profile, relationship, and philosophy (cached)
 4. **Dashboard** visualizes everything in a single page
 
@@ -165,17 +166,34 @@ The launcher automatically detects your Node.js runtime (mise, nvm, or system), 
 
 ## Estimated Cost
 
-claude-with-me uses Claude Code CLI (`claude --print`) for dynamic content generation. This is included in your [Claude Code subscription](https://claude.ai/code) — **no separate API charges**.
+claude-with-me uses Claude Code CLI (`claude --print`) for dynamic content generation.
 
-| Content | Cache Duration | Regenerations / Month |
-|---------|---------------|----------------------|
-| Profile, Relationship, Philosophy | 7 days | ~4 each |
-| Avatar Decoration, Accent Color | 7 days | ~4 each |
-| Voice (footer message) | 1 day | ~30 |
+### Model Priority
 
-**Impact on subscription usage:** Minimal. Approximately 50 CLI calls/month, mostly cached.
+By default, Opus is tried first; Sonnet is used as fallback only on **explicit operational failures** (rate limit, timeout, provider unavailable). The current model is shown next to each section title (e.g., `· ✨ opus · 5m ago`).
 
-To reduce usage further, set `claude.model` to `"sonnet"` in `config.json`.
+```json
+"claude": {
+  "modelPriority": ["opus", "sonnet"]
+}
+```
+
+To prefer Sonnet (cheaper, faster), reorder: `["sonnet", "opus"]`. To force a single model, use one entry: `["sonnet"]`.
+
+### Estimated Monthly Tokens
+
+| Item | Frequency | Tokens (Opus) |
+|---|---|---|
+| Voice message | Daily | ~45K |
+| Profile / Relationship / Philosophy | Weekly | ~28K |
+| Avatar decor / Accent color | Weekly | ~5K |
+| Project emojis (Sonnet, on new project) | Rare | <1K |
+| **Total** | | **~80K** |
+
+### Cost in Practice
+
+- **Claude Code subscription (Pro $20, Max $100):** Tokens are included in your plan — **no separate charges**. ~80K/month is roughly 1–2 typical chat sessions worth of usage.
+- **Direct API:** Roughly $2–3/month at Opus prices, less if Sonnet-first.
 
 <details>
 <summary><strong>Troubleshooting</strong></summary>

@@ -9,8 +9,21 @@ const DEFAULTS = {
   port: 3000,
   accentColor: null,
   language: "en",
-  journey: { todoLimit: 10, todoTtlDays: 14, historyLimit: 20 },
-  claude: { model: "opus", cliPath: "claude" },
+  journey: {
+    historyLimit: 20,
+    // System-level noise project names caused by claude-mem cwd resolution quirks.
+    // Override via config.json if needed.
+    excludedProjectNames: ["Workspaces", "Workspace", "observer-sessions"],
+    weekStartDay: 1, // 0=Sun, 1=Mon, ..., 6=Sat
+    refreshIntervalMin: 60,
+  },
+  claude: {
+    // Models tried in order. First success wins. Fallback only on explicit
+    // operational failures (rate_limit / timeout / unavailable) — never on
+    // quality heuristics. Each generated section reports which model produced it.
+    modelPriority: ["opus", "sonnet"],
+    cliPath: "claude",
+  },
 };
 
 function loadConfig() {
@@ -37,12 +50,19 @@ function loadConfig() {
     accentColor: raw.accentColor ?? DEFAULTS.accentColor,
     language: raw.language ?? DEFAULTS.language,
     journey: {
-      todoLimit: raw.journey?.todoLimit ?? DEFAULTS.journey.todoLimit,
-      todoTtlDays: raw.journey?.todoTtlDays ?? DEFAULTS.journey.todoTtlDays,
       historyLimit: raw.journey?.historyLimit ?? DEFAULTS.journey.historyLimit,
+      excludedProjectNames: Array.isArray(raw.journey?.excludedProjectNames)
+        ? raw.journey.excludedProjectNames
+        : DEFAULTS.journey.excludedProjectNames,
+      weekStartDay: raw.journey?.weekStartDay ?? DEFAULTS.journey.weekStartDay,
+      refreshIntervalMin: raw.journey?.refreshIntervalMin ?? DEFAULTS.journey.refreshIntervalMin,
     },
     claude: {
-      model: raw.claude?.model ?? DEFAULTS.claude.model,
+      modelPriority: Array.isArray(raw.claude?.modelPriority)
+        ? raw.claude.modelPriority
+        : raw.claude?.model
+          ? [raw.claude.model, "sonnet"].filter((v, i, a) => a.indexOf(v) === i)
+          : DEFAULTS.claude.modelPriority,
       cliPath: raw.claude?.cliPath ?? DEFAULTS.claude.cliPath,
     },
     claudeMem: {

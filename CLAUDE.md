@@ -51,8 +51,11 @@ npm start              # node server.js (production)
 Key settings:
 - `userName`, `role`, `avatar` — Dashboard display info
 - `accentColor` — User accent color applied to avatar, role label, journey line
-- `journey.todoTtlDays` — Auto-expire TODOs older than N days (default 14)
-- `claude.model` — AI generation model (`opus` / `sonnet`)
+- `journey.historyLimit` — Max History items to display (default 20)
+- `journey.excludedProjectNames` — Noise project names filtered from History (default: `["Workspaces", "Workspace", "observer-sessions"]`)
+- `journey.weekStartDay` — Day of week for weekly cache refresh (0=Sun, 1=Mon default)
+- `journey.refreshIntervalMin` — History refresh interval in minutes (default 60)
+- `claude.modelPriority` — AI models tried in order (default `["opus", "sonnet"]`); fallback on rate_limit/timeout/unavailable only
 - `claudeMem.disableReadCache` — Disable file-read caching hook
 - `claudeMem.excludedProjects` — Paths to exclude from tracking
 
@@ -67,6 +70,7 @@ Key settings:
 
 ## Key Behaviors
 
-- **Caching:** AI-generated content from claude-gen.js is stored as JSON files in `cache/`, auto-refreshed at midnight
+- **Caching:** AI-generated content is cached with tiered refresh: hourly (History), daily (voice), weekly on `weekStartDay` (profile/relationship/philosophy). Uses `node-cron` for scheduling.
+- **Honest historian:** Dashboard intentionally does not infer future tasks. Only retrospective journey is shown — what we've done, not what to do next.
 - **DB:** Accesses claude-mem SQLite DB in **read-only** mode — never writes to it
 - **Hooks patching:** Auto-syncs claude-mem hook settings on app startup
