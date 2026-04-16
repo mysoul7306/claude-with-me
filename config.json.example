@@ -9,7 +9,9 @@
     "todoLimit": 10,
     "todoTtlDays": 14,
     "historyLimit": 20,
-    "excludedProjectNames": ["Workspaces", "Workspace", "observer-sessions"]
+    "excludedProjectNames": ["Workspaces", "Workspace", "observer-sessions"],
+    "weekStartDay": 1,
+    "refreshIntervalMin": 60
   },
   "claude": {
     "model": "opus",
