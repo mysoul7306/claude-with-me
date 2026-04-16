@@ -53,6 +53,8 @@ Key settings:
 - `accentColor` — User accent color applied to avatar, role label, journey line
 - `journey.todoTtlDays` — Auto-expire TODOs older than N days (default 14)
 - `journey.excludedProjectNames` — Noise project names filtered from TODO/History (default: `["Workspaces", "Workspace", "observer-sessions"]`)
+- `journey.weekStartDay` — Day of week for weekly cache refresh (0=Sun, 1=Mon default)
+- `journey.refreshIntervalMin` — TODO/History refresh interval in minutes (default 60)
 - `claude.model` — AI generation model (`opus` / `sonnet`)
 - `claudeMem.disableReadCache` — Disable file-read caching hook
 - `claudeMem.excludedProjects` — Paths to exclude from tracking
@@ -68,6 +70,7 @@ Key settings:
 
 ## Key Behaviors
 
-- **Caching:** AI-generated content from claude-gen.js is stored as JSON files in `cache/`, auto-refreshed at midnight
+- **Caching:** AI-generated content is cached with tiered refresh: hourly (TODO/History via Sonnet), daily (voice), weekly on `weekStartDay` (profile/relationship/philosophy). Uses `node-cron` for scheduling.
+- **TODO refinement:** Raw next_steps are filtered by Sonnet CLI to extract actionable items only. No user configuration needed.
 - **DB:** Accesses claude-mem SQLite DB in **read-only** mode — never writes to it
 - **Hooks patching:** Auto-syncs claude-mem hook settings on app startup

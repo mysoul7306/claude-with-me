@@ -191,6 +191,20 @@ To reduce usage further, set `claude.model` to `"sonnet"` in `config.json`.
 
 </details>
 
+## Resource Usage
+
+claude-with-me uses Claude CLI for AI-generated content. Estimated monthly token usage:
+
+| Item | Model | Frequency | Monthly Tokens |
+|---|---|---|---|
+| TODO refinement | Sonnet | ~3-5x/day | ~186K |
+| Voice message | Config model | Daily | ~45K |
+| Profile/Relationship/Philosophy | Config model | Weekly | ~28K |
+| Avatar decor | Config model | Weekly | ~4K |
+| **Total** | | | **~263K** |
+
+**Cost:** With Claude CLI (Pro/Max subscription), these tokens are included in your plan at no additional charge. If using the API directly, estimated cost is ~$3/month.
+
 ## Acknowledgements
 
 Built on [claude-mem](https://github.com/thedotmack) by [@thedotmack](https://github.com/thedotmack) — a Claude Code plugin that records collaboration sessions into a persistent SQLite database. Without claude-mem, there would be no memories to display.
