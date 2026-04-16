@@ -137,6 +137,16 @@
     align-items: center;
     gap: 12px;
   }
+  .section-meta {
+    font-size: 0.7rem;
+    font-weight: 400;
+    color: #64748b;
+    opacity: 0.75;
+    letter-spacing: 0.02em;
+  }
+  .section-meta .meta-model {
+    color: #94a3b8;
+  }
 
   .section-title .icon {
     font-size: 1.8rem;
@@ -661,7 +671,7 @@
 
   <!-- WHO IS ROK -->
   <div class="profile-section">
-    <div class="section-title" id="section-through-my-eyes"><span class="icon">👤</span> Through My Eyes</div>
+    <div class="section-title" id="section-through-my-eyes"><span class="icon">👤</span> Through My Eyes <span class="section-meta" id="profile-meta"></span></div>
     <div class="profile-card">
       <div class="avatar-area">
         <div class="avatar-orbit" id="avatar-orbit">
@@ -678,7 +688,7 @@
 
   <!-- RELATIONSHIP -->
   <div class="relationship-section">
-    <div class="section-title" id="section-claude-with-me"><span class="icon">🔗</span> Claude With Me</div>
+    <div class="section-title" id="section-claude-with-me"><span class="icon">🔗</span> Claude With Me <span class="section-meta" id="relationship-meta"></span></div>
 
     <div class="relationship-visual">
       <div class="entity-bubble claude">
@@ -701,7 +711,7 @@
 
   <!-- PHILOSOPHY -->
   <div class="philosophy-section">
-    <div class="section-title" id="section-our-philosophy"><span class="icon">💡</span> Our Philosophy</div>
+    <div class="section-title" id="section-our-philosophy"><span class="icon">💡</span> Our Philosophy <span class="section-meta" id="philosophy-meta"></span></div>
     <div class="philosophy-banner">
       <div class="big-quote" id="phil-quote">loading...</div>
       <div class="explanation" id="phil-explanation"></div>
@@ -710,7 +720,7 @@
 
   <!-- JOURNEY TIMELINE -->
   <div class="timeline-section">
-    <div class="section-title" id="section-our-journey"><span class="icon">📅</span> Our Journey</div>
+    <div class="section-title" id="section-our-journey"><span class="icon">📅</span> Our Journey <span class="section-meta" id="journey-meta"></span></div>
     <div id="journey-timeline" class="timeline">loading...</div>
   </div>
 
@@ -855,6 +865,29 @@ function renderSection(elementId, data, renderFn) {
   renderFn(el, data);
 }
 
+function timeAgo(isoString) {
+  if (!isoString) return '';
+  const diff = Date.now() - new Date(isoString).getTime();
+  if (diff < 0) return 'just now';
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return 'just now';
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const days = Math.floor(hr / 24);
+  return `${days}d ago`;
+}
+
+function setSectionMeta(metaId, data) {
+  const el = document.getElementById(metaId);
+  if (!el) return;
+  if (!data || data.error) { el.textContent = ''; return; }
+  const parts = [];
+  if (data.generatedBy) parts.push(`<span class="meta-model">✨ ${data.generatedBy}</span>`);
+  if (data.generatedAt) parts.push(timeAgo(data.generatedAt));
+  el.innerHTML = parts.length ? `· ${parts.join(' · ')}` : '';
+}
+
 async function load() {
   try {
     const [stats, journey, profile, relationship, philosophy, voice] = await Promise.all([
@@ -911,6 +944,12 @@ async function load() {
     }
 
     renderJourney(journey);
+
+    // Section meta (AI model + last refreshed)
+    setSectionMeta('profile-meta', profile);
+    setSectionMeta('relationship-meta', relationship);
+    setSectionMeta('philosophy-meta', philosophy);
+    setSectionMeta('journey-meta', journey);
 
     // Philosophy
     if (!philosophy.error) {
@@ -1030,6 +1069,7 @@ async function pollJourney() {
   try {
     const journey = await fetch('/api/journey').then(r => r.json());
     renderJourney(journey);
+    setSectionMeta('journey-meta', journey);
   } catch (err) {
     console.warn('Journey poll failed:', err);
   }

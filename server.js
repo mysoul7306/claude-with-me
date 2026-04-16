@@ -35,8 +35,9 @@ app.get("/api/stats", (_req, res) => res.json(getStats()));
 
 app.get("/api/journey", async (_req, res) => {
   const cached = readCache("journey", JOURNEY_TTL);
-  if (cached?.content) return res.json(cached.content);
-
+  if (cached?.content) {
+    return res.json({ ...cached.content, generatedAt: cached.generatedAt });
+  }
   const result = await buildJourney();
   res.json(result);
 });
@@ -69,9 +70,9 @@ async function buildJourney() {
     projectEmoji: emojis[h.project] || "",
   }));
 
-  const result = { history: historyWithEmoji };
-  writeCache("journey", result);
-  return result;
+  const payload = { history: historyWithEmoji };
+  const written = writeCache("journey", payload);
+  return { ...payload, generatedAt: written.generatedAt };
 }
 
 async function refreshJourney() {
