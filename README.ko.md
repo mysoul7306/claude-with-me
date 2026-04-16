@@ -86,7 +86,7 @@ wsl --install
 | `journey.excludedProjectNames` | 노이즈로 필터링할 프로젝트명 | `["Workspaces", "Workspace", "observer-sessions"]` |
 | `journey.weekStartDay` | 주간 캐시 갱신 요일 (0=일, 1=월) | `1` |
 | `journey.refreshIntervalMin` | History 갱신 주기 (분) | `60` |
-| `claude.model` | Claude 모델 (`opus` / `sonnet`) | `"opus"` |
+| `claude.modelPriority` | 시도할 모델 순서. 운영 실패(rate limit/timeout/unavailable) 시에만 다음 모델로 fallback | `["opus", "sonnet"]` |
 | `claude.cliPath` | Claude CLI 경로 | `"claude"` |
 
 ### claude-mem 연동 설정
@@ -166,17 +166,34 @@ claude-mem DB ──> Express API ──> Claude CLI ──> Dashboard
 
 ## 예상 비용
 
-claude-with-me는 동적 콘텐츠 생성에 Claude Code CLI (`claude --print`)를 사용합니다. 이는 [Claude Code 구독](https://claude.ai/code)에 포함되어 있으며, **별도 API 요금이 발생하지 않습니다.**
+claude-with-me는 동적 콘텐츠 생성에 Claude Code CLI (`claude --print`)를 사용합니다.
 
-| 콘텐츠 | 캐시 기간 | 월간 재생성 횟수 |
-|--------|----------|----------------|
-| 프로필, 관계, 철학 | 7일 | 각 ~4회 |
-| 아바타 장식, 테마 색상 | 7일 | 각 ~4회 |
-| 보이스 (푸터 메시지) | 1일 | ~30회 |
+### 모델 우선순위
 
-**구독 사용량 영향:** 미미합니다. 월 약 50회 CLI 호출, 대부분 캐시로 처리.
+기본적으로 Opus를 먼저 시도하고, **명시적인 운영 실패**(rate limit, timeout, provider unavailable)일 때만 Sonnet으로 fallback 합니다. 각 섹션 제목 옆에 사용된 모델이 표시됩니다 (예: `· ✨ opus · 5m ago`).
 
-사용량을 더 줄이려면 `config.json`에서 `claude.model`을 `"sonnet"`으로 변경하세요.
+```json
+"claude": {
+  "modelPriority": ["opus", "sonnet"]
+}
+```
+
+Sonnet을 우선하려면 (저렴/빠름) 순서를 바꾸세요: `["sonnet", "opus"]`. 한 모델만 강제하려면 한 항목만: `["sonnet"]`.
+
+### 월간 토큰 예상치
+
+| 항목 | 주기 | 토큰 (Opus 기준) |
+|---|---|---|
+| Voice (한마디) | 매일 | ~45K |
+| Profile / Relationship / Philosophy | 매주 | ~28K |
+| Avatar decor / Accent color | 매주 | ~5K |
+| Project emojis (Sonnet, 새 프로젝트 시) | 드뭄 | <1K |
+| **합계** | | **~80K** |
+
+### 실제 비용
+
+- **Claude Code 구독 (Pro $20, Max $100):** 토큰이 플랜에 포함되어 **별도 과금 없음**. ~80K/월은 일반 채팅 1~2개 분량.
+- **API 직접 사용:** Opus 기준 약 $2~3/월, Sonnet 우선이면 더 저렴.
 
 <details>
 <summary><strong>트러블슈팅</strong></summary>

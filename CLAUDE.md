@@ -55,7 +55,7 @@ Key settings:
 - `journey.excludedProjectNames` — Noise project names filtered from History (default: `["Workspaces", "Workspace", "observer-sessions"]`)
 - `journey.weekStartDay` — Day of week for weekly cache refresh (0=Sun, 1=Mon default)
 - `journey.refreshIntervalMin` — History refresh interval in minutes (default 60)
-- `claude.model` — AI generation model (`opus` / `sonnet`)
+- `claude.modelPriority` — AI models tried in order (default `["opus", "sonnet"]`); fallback on rate_limit/timeout/unavailable only
 - `claudeMem.disableReadCache` — Disable file-read caching hook
 - `claudeMem.excludedProjects` — Paths to exclude from tracking
 
