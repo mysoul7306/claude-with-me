@@ -17,7 +17,13 @@ const DEFAULTS = {
     weekStartDay: 1, // 0=Sun, 1=Mon, ..., 6=Sat
     refreshIntervalMin: 60,
   },
-  claude: { model: "opus", cliPath: "claude" },
+  claude: {
+    // Models tried in order. First success wins. Fallback only on explicit
+    // operational failures (rate_limit / timeout / unavailable) — never on
+    // quality heuristics. Each generated section reports which model produced it.
+    modelPriority: ["opus", "sonnet"],
+    cliPath: "claude",
+  },
 };
 
 function loadConfig() {
@@ -52,7 +58,11 @@ function loadConfig() {
       refreshIntervalMin: raw.journey?.refreshIntervalMin ?? DEFAULTS.journey.refreshIntervalMin,
     },
     claude: {
-      model: raw.claude?.model ?? DEFAULTS.claude.model,
+      modelPriority: Array.isArray(raw.claude?.modelPriority)
+        ? raw.claude.modelPriority
+        : raw.claude?.model
+          ? [raw.claude.model, "sonnet"].filter((v, i, a) => a.indexOf(v) === i)
+          : DEFAULTS.claude.modelPriority,
       cliPath: raw.claude?.cliPath ?? DEFAULTS.claude.cliPath,
     },
     claudeMem: {

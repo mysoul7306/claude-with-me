@@ -12,7 +12,7 @@
     "refreshIntervalMin": 60
   },
   "claude": {
-    "model": "opus",
+    "modelPriority": ["opus", "sonnet"],
     "cliPath": "claude"
   },
   "claudeMem": {

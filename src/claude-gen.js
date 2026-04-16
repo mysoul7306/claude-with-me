@@ -29,38 +29,54 @@ export function readCache(type, ttlMs) {
   return null;
 }
 
-export function writeCache(type, content) {
-  const data = { content, generatedAt: new Date().toISOString() };
+export function writeCache(type, content, generatedBy = null) {
+  const data = { content, generatedBy, generatedAt: new Date().toISOString() };
   try { writeFileSync(cachePath(type), JSON.stringify(data), "utf-8"); } catch { /* ok */ }
   return data;
 }
 
-async function callClaude(prompt) {
-  try {
-    const escaped = prompt.replace(/'/g, "'\\''");
-    const { stdout } = await execAsync(
-      `echo '${escaped}' | ${config.claude.cliPath} --print --model ${config.claude.model}`,
-      { encoding: "utf-8", timeout: 120000 }
-    );
-    const result = stdout.trim();
-    if (result.length > 10) return result;
-  } catch (err) {
-    console.warn("[claude-gen] CLI call failed:", err.message);
-  }
-  return null;
+// Errors that legitimately warrant fallback to the next model in priority.
+// Quality heuristics (short response, malformed JSON) do NOT trigger fallback —
+// returning null lets the caller decide.
+const FALLBACK_TRIGGERS = new Set(["rate_limit", "timeout", "unavailable"]);
+
+function classifyClaudeError(err) {
+  const msg = (err?.message ?? "").toLowerCase();
+  if (msg.includes("rate") || msg.includes("429")) return "rate_limit";
+  if (msg.includes("timeout") || msg.includes("etimedout")) return "timeout";
+  if (msg.includes("unavailable") || msg.includes("503") || msg.includes("overloaded")) return "unavailable";
+  return "other";
 }
 
-async function callClaudeSonnet(prompt) {
-  try {
-    const escaped = prompt.replace(/'/g, "'\\''");
-    const { stdout } = await execAsync(
-      `echo '${escaped}' | ${config.claude.cliPath} --print --model sonnet`,
-      { encoding: "utf-8", timeout: 120000 }
-    );
-    const result = stdout.trim();
-    if (result.length > 10) return result;
-  } catch (err) {
-    console.warn("[claude-gen] Sonnet CLI call failed:", err.message);
+async function callClaudeWithModel(prompt, model) {
+  const escaped = prompt.replace(/'/g, "'\\''");
+  const { stdout } = await execAsync(
+    `echo '${escaped}' | ${config.claude.cliPath} --print --model ${model}`,
+    { encoding: "utf-8", timeout: 120000 }
+  );
+  const result = stdout.trim();
+  return result.length > 10 ? result : null;
+}
+
+// Returns { content, generatedBy } on success, null on failure.
+// `opts.model` forces a single model (no fallback).
+async function callClaude(prompt, opts = {}) {
+  const models = opts.model
+    ? [opts.model]
+    : (config.claude.modelPriority ?? ["opus"]);
+
+  for (const model of models) {
+    try {
+      const content = await callClaudeWithModel(prompt, model);
+      if (content) return { content, generatedBy: model };
+      // Empty/short response: don't fallback (Codex: no quality heuristic fallback)
+      return null;
+    } catch (err) {
+      const reason = classifyClaudeError(err);
+      console.warn(`[claude-gen] ${model} failed (${reason}): ${err.message}`);
+      if (!FALLBACK_TRIGGERS.has(reason)) return null;
+      // Otherwise: try next model in priority
+    }
   }
   return null;
 }
@@ -88,14 +104,16 @@ export async function getProjectEmojis(projectNames) {
   );
   if (missing.length === 0) return existing;
 
-  const result = await callClaudeSonnet(
-    `${PROJECT_EMOJI_PROMPT}\n\nProjects: ${missing.join(", ")}`
+  // Project emojis: Sonnet only — trivial classification, no need for Opus.
+  const res = await callClaude(
+    `${PROJECT_EMOJI_PROMPT}\n\nProjects: ${missing.join(", ")}`,
+    { model: "sonnet" }
   );
-  if (result) {
-    const parsed = parseJson(result);
+  if (res?.content) {
+    const parsed = parseJson(res.content);
     if (parsed && typeof parsed === "object") {
       const merged = { ...existing, ...parsed };
-      writeCache("project-emojis", merged);
+      writeCache("project-emojis", merged, res.generatedBy);
       return merged;
     }
   }
@@ -116,10 +134,10 @@ export async function getProfile(stats) {
     totalSessions: stats.totalSessions,
   });
 
-  const result = await callClaude(prompt);
-  if (result) {
-    const parsed = parseJson(result);
-    if (parsed) return { ...writeCache("profile", parsed), cached: false };
+  const res = await callClaude(prompt);
+  if (res?.content) {
+    const parsed = parseJson(res.content);
+    if (parsed) return { ...writeCache("profile", parsed, res.generatedBy), cached: false };
   }
 
   return { error: true, message: t.ui.errorCli };
@@ -135,10 +153,10 @@ export async function getRelationship(stats) {
     userName: config.userName,
   });
 
-  const result = await callClaude(prompt);
-  if (result) {
-    const parsed = parseJson(result);
-    if (parsed) return { ...writeCache("relationship", parsed), cached: false };
+  const res = await callClaude(prompt);
+  if (res?.content) {
+    const parsed = parseJson(res.content);
+    if (parsed) return { ...writeCache("relationship", parsed, res.generatedBy), cached: false };
   }
 
   return { error: true, message: t.ui.errorCli };
@@ -154,10 +172,10 @@ export async function getPhilosophy(stats) {
     userName: config.userName,
   });
 
-  const result = await callClaude(prompt);
-  if (result) {
-    const parsed = parseJson(result);
-    if (parsed) return { ...writeCache("philosophy", parsed), cached: false };
+  const res = await callClaude(prompt);
+  if (res?.content) {
+    const parsed = parseJson(res.content);
+    if (parsed) return { ...writeCache("philosophy", parsed, res.generatedBy), cached: false };
   }
 
   return { error: true, message: t.ui.errorCli };
@@ -176,9 +194,9 @@ export async function getVoice(stats) {
     totalObservations: stats.totalObservations,
   });
 
-  const result = await callClaude(prompt);
-  if (result) {
-    return { ...writeCache("voice", result), cached: false };
+  const res = await callClaude(prompt);
+  if (res?.content) {
+    return { ...writeCache("voice", res.content, res.generatedBy), cached: false };
   }
 
   return { error: true, message: t.ui.errorCli };
@@ -195,10 +213,10 @@ export async function getAvatarDecor() {
     role: config.role,
   });
 
-  const result = await callClaude(prompt);
-  if (result) {
-    const parsed = parseJson(result);
-    if (parsed) return { ...writeCache("avatar-decor", parsed), cached: false };
+  const res = await callClaude(prompt);
+  if (res?.content) {
+    const parsed = parseJson(res.content);
+    if (parsed) return { ...writeCache("avatar-decor", parsed, res.generatedBy), cached: false };
   }
   return { error: true, message: t.ui.errorAvatarDecor };
 }
@@ -216,10 +234,10 @@ export async function getAccentColor() {
     role: config.role,
   });
 
-  const result = await callClaude(prompt);
-  if (result) {
-    const parsed = parseJson(result);
-    if (parsed) return { ...writeCache("accent-color", parsed), cached: false };
+  const res = await callClaude(prompt);
+  if (res?.content) {
+    const parsed = parseJson(res.content);
+    if (parsed) return { ...writeCache("accent-color", parsed, res.generatedBy), cached: false };
   }
   return { accentColor: "#419BFF" };
 }
