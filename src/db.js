@@ -167,8 +167,8 @@ function buildExcludedProjectsClause(columnExpr) {
   };
 }
 
-export function getJourney() {
-  if (!db) return { todo: [], history: [] };
+export function getJourneyTodo() {
+  if (!db) return [];
 
   const NOISE_PATTERNS = t.filters.noisePatterns;
   const noiseWhere = NOISE_PATTERNS.map(() => "next_steps NOT LIKE ?").join(" AND ");
@@ -220,11 +220,11 @@ export function getJourney() {
     sessionOrder.map((r, i) => [r.memory_session_id, i])
   );
 
-  // Step 2: Cross-session filtering — check if next sessions' completed covers this next_steps
+  // Step 3: Cross-session filtering — check if next sessions' completed covers this next_steps
   // Split next_steps into individual lines and filter out completed ones
   const NEXT_SESSION_RANGE = 5;
 
-  const todo = lastNextStepsPerSession
+  return lastNextStepsPerSession
     .flatMap((r) => {
       const currentIdx = sessionIndex.get(r.memory_session_id);
       const lines = r.next_steps
@@ -273,14 +273,19 @@ export function getJourney() {
       return [{ text: remainingLines.join("\n"), project: r.project || "General", date }];
     })
     .slice(0, config.journey.todoLimit);
+}
 
-  const excludedHistory = buildExcludedProjectsClause("project");
+export function getJourneyHistory() {
+  if (!db) return [];
+
+  const excluded = buildExcludedProjectsClause("project");
   const recentActivityCutoff = Date.now() - 10 * 60 * 1000;
 
-  const history = db
+  const rows = db
     .prepare(
       `SELECT
          COALESCE(first.project, comp.project) as project,
+         first.memory_session_id,
          first.request, first.investigated,
          comp.completed, comp.created_at, comp.created_at_epoch,
          sdk.custom_title
@@ -293,7 +298,7 @@ export function getJourney() {
                     ORDER BY created_at_epoch ASC
                   ) as rn
            FROM session_summaries
-           WHERE ${excludedHistory.sql}
+           WHERE ${excluded.sql}
          )
          WHERE rn = 1
        ) first
@@ -319,16 +324,45 @@ export function getJourney() {
          WHERE created_at_epoch >= ?
          GROUP BY memory_session_id
        )
-       ORDER BY first.created_at_epoch DESC
+       ORDER BY comp.created_at_epoch DESC
        LIMIT ${config.journey.historyLimit}`
     )
-    .all(...excludedHistory.params, recentActivityCutoff)
-    .map((r) => ({
-      date: r.created_at ? r.created_at.split("T")[0] : "unknown",
-      project: r.project || "General",
-      title: r.custom_title || r.request || r.investigated || "Session",
-      description: r.completed || "",
-    }));
+    .all(...excluded.params, recentActivityCutoff);
 
-  return { todo, history };
+  if (rows.length === 0) return [];
+
+  // Fetch observations types for matched sessions
+  const sessionIds = rows.map((r) => r.memory_session_id);
+  const obsPlaceholders = sessionIds.map(() => "?").join(",");
+  const obsRows = db
+    .prepare(
+      `SELECT memory_session_id, type
+       FROM observations
+       WHERE memory_session_id IN (${obsPlaceholders}) AND type IS NOT NULL
+       GROUP BY memory_session_id, type`
+    )
+    .all(...sessionIds);
+
+  const typesMap = obsRows.reduce((acc, obs) => {
+    const existing = acc.get(obs.memory_session_id) ?? [];
+    return acc.set(obs.memory_session_id, [...existing, obs.type]);
+  }, new Map());
+
+  return rows.map((r) => ({
+    date: r.created_at ? r.created_at.split("T")[0] : "unknown",
+    project: r.project || "General",
+    title: r.custom_title || r.request || r.investigated || "Session",
+    description: r.completed || "",
+    types: typesMap.get(r.memory_session_id) ?? [],
+  }));
+}
+
+export function getLatestSummaryEpoch() {
+  if (!db) return 0;
+  const row = db.prepare("SELECT MAX(created_at_epoch) as latest FROM session_summaries").get();
+  return row?.latest || 0;
+}
+
+export function getJourney() {
+  return { todo: getJourneyTodo(), history: getJourneyHistory() };
 }
