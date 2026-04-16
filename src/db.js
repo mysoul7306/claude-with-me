@@ -155,12 +155,26 @@ function weightedContainment(nextSteps, completed) {
 
 const COMPLETED_SIMILARITY_THRESHOLD = 0.25;
 
+// Build a SQL fragment for excluding noise project names from queries.
+// Uses placeholders so we can safely bind the config-driven list.
+function buildExcludedProjectsClause(columnExpr) {
+  const names = config.journey.excludedProjectNames ?? [];
+  if (names.length === 0) return { sql: "1=1", params: [] };
+  const placeholders = names.map(() => "?").join(",");
+  return {
+    sql: `(${columnExpr} IS NULL OR ${columnExpr} NOT IN (${placeholders}))`,
+    params: names,
+  };
+}
+
 export function getJourney() {
   if (!db) return { todo: [], history: [] };
 
   const NOISE_PATTERNS = t.filters.noisePatterns;
   const noiseWhere = NOISE_PATTERNS.map(() => "next_steps NOT LIKE ?").join(" AND ");
   const noiseParams = NOISE_PATTERNS.map((p) => `%${p}%`);
+
+  const excludedInner = buildExcludedProjectsClause("project");
 
   // Step 1: Get only the last next_steps per session, but only if no completed exists after it
   const ttlMs = (config.journey.todoTtlDays ?? 14) * 24 * 60 * 60 * 1000;
@@ -174,7 +188,7 @@ export function getJourney() {
          SELECT memory_session_id, MAX(created_at_epoch) as max_epoch
          FROM session_summaries
          WHERE next_steps IS NOT NULL AND LENGTH(next_steps) > 5
-           AND (project IS NULL OR project != 'Workspaces')
+           AND ${excludedInner.sql}
            AND created_at_epoch >= ?
            AND ${noiseWhere}
          GROUP BY memory_session_id
@@ -190,7 +204,7 @@ export function getJourney() {
        ORDER BY s.created_at_epoch DESC
        LIMIT ${config.journey.todoLimit * 2}`
     )
-    .all(ttlCutoff, ...noiseParams);
+    .all(...excludedInner.params, ttlCutoff, ...noiseParams);
 
   // Step 2: Get session start times for ordering sessions
   const sessionOrder = db
@@ -260,18 +274,28 @@ export function getJourney() {
     })
     .slice(0, config.journey.todoLimit);
 
+  const excludedHistory = buildExcludedProjectsClause("project");
+  const recentActivityCutoff = Date.now() - 10 * 60 * 1000;
+
   const history = db
     .prepare(
       `SELECT
          COALESCE(first.project, comp.project) as project,
          first.request, first.investigated,
-         comp.completed, comp.created_at, comp.created_at_epoch
+         comp.completed, comp.created_at, comp.created_at_epoch,
+         sdk.custom_title
        FROM (
-         SELECT memory_session_id, project, request, investigated,
-                MIN(created_at_epoch) as min_epoch
-         FROM session_summaries
-         WHERE (project IS NULL OR project != 'Workspaces')
-         GROUP BY memory_session_id
+         SELECT memory_session_id, project, request, investigated, created_at_epoch
+         FROM (
+           SELECT memory_session_id, project, request, investigated, created_at_epoch,
+                  ROW_NUMBER() OVER (
+                    PARTITION BY memory_session_id
+                    ORDER BY created_at_epoch ASC
+                  ) as rn
+           FROM session_summaries
+           WHERE ${excludedHistory.sql}
+         )
+         WHERE rn = 1
        ) first
        INNER JOIN (
          SELECT memory_session_id, project, completed,
@@ -284,23 +308,25 @@ export function getJourney() {
          WHERE completed IS NOT NULL AND completed != ''
        ) comp ON first.memory_session_id = comp.memory_session_id
          AND comp.rn = 1
+       LEFT JOIN sdk_sessions sdk
+         ON sdk.memory_session_id = first.memory_session_id
        WHERE first.memory_session_id NOT IN (
          SELECT memory_session_id FROM sdk_sessions
          WHERE status = 'active' AND memory_session_id IS NOT NULL
        )
        AND first.memory_session_id NOT IN (
          SELECT memory_session_id FROM session_summaries
-         WHERE created_at_epoch >= ${Date.now() - 10 * 60 * 1000}
+         WHERE created_at_epoch >= ?
          GROUP BY memory_session_id
        )
-       ORDER BY first.min_epoch DESC
+       ORDER BY first.created_at_epoch DESC
        LIMIT ${config.journey.historyLimit}`
     )
-    .all()
+    .all(...excludedHistory.params, recentActivityCutoff)
     .map((r) => ({
       date: r.created_at ? r.created_at.split("T")[0] : "unknown",
       project: r.project || "General",
-      title: r.request || r.investigated || "Session",
+      title: r.custom_title || r.request || r.investigated || "Session",
       description: r.completed || "",
     }));
 

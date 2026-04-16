@@ -8,7 +8,8 @@
   "journey": {
     "todoLimit": 10,
     "todoTtlDays": 14,
-    "historyLimit": 20
+    "historyLimit": 20,
+    "excludedProjectNames": ["Workspaces", "Workspace", "observer-sessions"]
   },
   "claude": {
     "model": "opus",

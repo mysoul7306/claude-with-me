@@ -52,6 +52,7 @@ Key settings:
 - `userName`, `role`, `avatar` — Dashboard display info
 - `accentColor` — User accent color applied to avatar, role label, journey line
 - `journey.todoTtlDays` — Auto-expire TODOs older than N days (default 14)
+- `journey.excludedProjectNames` — Noise project names filtered from TODO/History (default: `["Workspaces", "Workspace", "observer-sessions"]`)
 - `claude.model` — AI generation model (`opus` / `sonnet`)
 - `claudeMem.disableReadCache` — Disable file-read caching hook
 - `claudeMem.excludedProjects` — Paths to exclude from tracking

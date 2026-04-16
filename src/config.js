@@ -9,7 +9,14 @@ const DEFAULTS = {
   port: 3000,
   accentColor: null,
   language: "en",
-  journey: { todoLimit: 10, todoTtlDays: 14, historyLimit: 20 },
+  journey: {
+    todoLimit: 10,
+    todoTtlDays: 14,
+    historyLimit: 20,
+    // System-level noise project names caused by claude-mem cwd resolution quirks.
+    // Filtered from both TODO and History queries. Override via config.json if needed.
+    excludedProjectNames: ["Workspaces", "Workspace", "observer-sessions"],
+  },
   claude: { model: "opus", cliPath: "claude" },
 };
 
@@ -40,6 +47,9 @@ function loadConfig() {
       todoLimit: raw.journey?.todoLimit ?? DEFAULTS.journey.todoLimit,
       todoTtlDays: raw.journey?.todoTtlDays ?? DEFAULTS.journey.todoTtlDays,
       historyLimit: raw.journey?.historyLimit ?? DEFAULTS.journey.historyLimit,
+      excludedProjectNames: Array.isArray(raw.journey?.excludedProjectNames)
+        ? raw.journey.excludedProjectNames
+        : DEFAULTS.journey.excludedProjectNames,
     },
     claude: {
       model: raw.claude?.model ?? DEFAULTS.claude.model,
