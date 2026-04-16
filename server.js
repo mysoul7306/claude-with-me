@@ -3,11 +3,11 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { config } from "./src/config.js";
 import { t, interpolate } from "./src/i18n.js";
-import { getStats, getJourneyTodo, getJourneyHistory, getLatestSummaryEpoch } from "./src/db.js";
+import { getStats, getJourneyHistory, getLatestSummaryEpoch } from "./src/db.js";
 import {
   getProfile, getRelationship, getPhilosophy, getVoice,
   getAvatarDecor, getAccentColor,
-  refineTodo, getProjectEmojis, scheduleRefreshCycles,
+  getProjectEmojis, scheduleRefreshCycles,
   readCache, writeCache,
 } from "./src/claude-gen.js";
 import { patchClaudeMemHooks, syncExcludedProjects } from "./src/hooks-patcher.js";
@@ -59,28 +59,17 @@ app.get("/api/accent-color", async (_req, res) => {
 let lastKnownEpoch = 0;
 
 async function buildJourney() {
-  const rawTodo = getJourneyTodo();
   const history = getJourneyHistory();
 
-  const allProjects = [
-    ...new Set([
-      ...rawTodo.map((t) => t.project),
-      ...history.map((h) => h.project),
-    ]),
-  ];
+  const allProjects = [...new Set(history.map((h) => h.project))];
   const emojis = await getProjectEmojis(allProjects);
 
-  const todo = await refineTodo(rawTodo);
-  const todoWithEmoji = todo.map((t) => ({
-    ...t,
-    projectEmoji: emojis[t.project] || "",
-  }));
   const historyWithEmoji = history.map((h) => ({
     ...h,
     projectEmoji: emojis[h.project] || "",
   }));
 
-  const result = { todo: todoWithEmoji, history: historyWithEmoji };
+  const result = { history: historyWithEmoji };
   writeCache("journey", result);
   return result;
 }

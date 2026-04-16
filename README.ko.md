@@ -82,9 +82,10 @@ wsl --install
 | `port` | 서버 포트 | `3000` |
 | `language` | 대시보드 언어 (`en` / `ko`) | `"en"` |
 | `accentColor` | 테마 색상 (hex). 미지정 시 Claude가 추천 | `"#419BFF"` |
-| `journey.todoLimit` | TODO 표시 개수 | `10` |
-| `journey.todoTtlDays` | N일 이상 된 TODO 자동 만료 | `14` |
 | `journey.historyLimit` | History 표시 개수 | `20` |
+| `journey.excludedProjectNames` | 노이즈로 필터링할 프로젝트명 | `["Workspaces", "Workspace", "observer-sessions"]` |
+| `journey.weekStartDay` | 주간 캐시 갱신 요일 (0=일, 1=월) | `1` |
+| `journey.refreshIntervalMin` | History 갱신 주기 (분) | `60` |
 | `claude.model` | Claude 모델 (`opus` / `sonnet`) | `"opus"` |
 | `claude.cliPath` | Claude CLI 경로 | `"claude"` |
 
@@ -157,7 +158,7 @@ claude-mem DB ──> Express API ──> Claude CLI ──> Dashboard
 ```
 
 1. **claude-mem**이 Claude Code 세션을 SQLite DB에 기록
-2. **서버**가 DB를 읽어 통계, TODO, History 제공
+2. **서버**가 DB를 읽어 통계와 History 제공
 3. **Claude CLI**가 프로필, 관계, 철학을 동적 생성 (캐시 적용)
 4. **대시보드**가 모든 정보를 한 페이지에 시각화
 

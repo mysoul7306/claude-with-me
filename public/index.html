@@ -711,7 +711,6 @@
   <!-- JOURNEY TIMELINE -->
   <div class="timeline-section">
     <div class="section-title" id="section-our-journey"><span class="icon">📅</span> Our Journey</div>
-    <div id="upcoming" style="margin-bottom:32px;">loading...</div>
     <div id="journey-timeline" class="timeline">loading...</div>
   </div>
 
@@ -988,23 +987,6 @@ function renderJourney(journey) {
     decision:  { emoji: '⚖️', color: '#06b6d4' },
     refactor:  { emoji: '🔄', color: '#a855f7' },
   };
-
-  // TODO List
-  if (journey.todo && journey.todo.length > 0) {
-    document.getElementById('upcoming').innerHTML =
-      `<h3 style="color:#f59e0b;font-size:1.2rem;margin-bottom:16px;">📋 ${appConfig.ui?.todoTitle || 'TODO List'}</h3>` +
-      journey.todo.map(t => {
-        const projLabel = t.projectEmoji ? `${t.projectEmoji} ${t.project}` : t.project;
-        const badge = t.project ? `<span style="display:inline-block;padding:1px 8px;background:rgba(245,158,11,0.1);color:#f59e0b;border-radius:10px;font-size:0.7rem;margin-left:6px;">${projLabel}</span>` : '';
-        const dateBadge = t.date && t.date !== 'unknown' ? `<span style="display:inline-block;padding:1px 8px;background:rgba(100,116,139,0.1);color:#64748b;border-radius:10px;font-size:0.65rem;margin-left:6px;">${t.date}</span>` : '';
-        return `<div style="padding:10px 14px;margin-bottom:8px;background:#111827;border:1px solid #1e293b;border-left:3px solid #f59e0b;border-radius:8px;font-size:0.88rem;color:#94a3b8;line-height:1.6;">
-          <div style="margin-bottom:4px;color:#e2e8f0;">${t.text}</div>
-          <div>${badge}${dateBadge}</div>
-        </div>`;
-      }).join('');
-  } else {
-    document.getElementById('upcoming').innerHTML = '';
-  }
 
   // History - grouped by date
   if (journey.history && journey.history.length > 0) {

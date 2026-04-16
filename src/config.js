@@ -10,11 +10,9 @@ const DEFAULTS = {
   accentColor: null,
   language: "en",
   journey: {
-    todoLimit: 10,
-    todoTtlDays: 14,
     historyLimit: 20,
     // System-level noise project names caused by claude-mem cwd resolution quirks.
-    // Filtered from both TODO and History queries. Override via config.json if needed.
+    // Override via config.json if needed.
     excludedProjectNames: ["Workspaces", "Workspace", "observer-sessions"],
     weekStartDay: 1, // 0=Sun, 1=Mon, ..., 6=Sat
     refreshIntervalMin: 60,
@@ -46,8 +44,6 @@ function loadConfig() {
     accentColor: raw.accentColor ?? DEFAULTS.accentColor,
     language: raw.language ?? DEFAULTS.language,
     journey: {
-      todoLimit: raw.journey?.todoLimit ?? DEFAULTS.journey.todoLimit,
-      todoTtlDays: raw.journey?.todoTtlDays ?? DEFAULTS.journey.todoTtlDays,
       historyLimit: raw.journey?.historyLimit ?? DEFAULTS.journey.historyLimit,
       excludedProjectNames: Array.isArray(raw.journey?.excludedProjectNames)
         ? raw.journey.excludedProjectNames

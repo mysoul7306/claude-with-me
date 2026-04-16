@@ -82,9 +82,10 @@ Open `config.json` to customize:
 | `port` | Server port | `3000` |
 | `language` | Dashboard language (`en` / `ko`) | `"en"` |
 | `accentColor` | Theme color (hex). Claude suggests one if omitted | `"#419BFF"` |
-| `journey.todoLimit` | TODOs to display | `10` |
-| `journey.todoTtlDays` | Auto-expire TODOs older than N days | `14` |
 | `journey.historyLimit` | History entries to display | `20` |
+| `journey.excludedProjectNames` | Project names filtered as noise | `["Workspaces", "Workspace", "observer-sessions"]` |
+| `journey.weekStartDay` | Day of week for weekly cache refresh (0=Sun, 1=Mon) | `1` |
+| `journey.refreshIntervalMin` | History refresh interval in minutes | `60` |
 | `claude.model` | Claude model (`opus` / `sonnet`) | `"opus"` |
 | `claude.cliPath` | Path to Claude CLI | `"claude"` |
 
@@ -157,7 +158,7 @@ claude-mem DB ──> Express API ──> Claude CLI ──> Dashboard
 ```
 
 1. **claude-mem** records Claude Code sessions into a SQLite DB
-2. **Server** reads the DB for stats, TODOs, and history
+2. **Server** reads the DB for stats and history
 3. **Claude CLI** dynamically generates profile, relationship, and philosophy (cached)
 4. **Dashboard** visualizes everything in a single page
 
@@ -197,11 +198,11 @@ claude-with-me uses Claude CLI for AI-generated content. Estimated monthly token
 
 | Item | Model | Frequency | Monthly Tokens |
 |---|---|---|---|
-| TODO refinement | Sonnet | ~3-5x/day | ~186K |
+| Project emojis | Sonnet | On new project (rare) | <1K |
 | Voice message | Config model | Daily | ~45K |
 | Profile/Relationship/Philosophy | Config model | Weekly | ~28K |
 | Avatar decor | Config model | Weekly | ~4K |
-| **Total** | | | **~263K** |
+| **Total** | | | **~77K** |
 
 **Cost:** With Claude CLI (Pro/Max subscription), these tokens are included in your plan at no additional charge. If using the API directly, estimated cost is ~$3/month.
 
