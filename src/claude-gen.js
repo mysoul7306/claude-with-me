@@ -12,6 +12,21 @@ const execAsync = promisify(exec);
 const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
 const ONE_DAY = 24 * 60 * 60 * 1000;
 
+function getWeekRange() {
+  const weekDay = config.journey.weekStartDay ?? 1;
+  const today = new Date();
+  const diff = (today.getDay() - weekDay + 7) % 7;
+  const weekStart = new Date(today);
+  weekStart.setDate(today.getDate() - diff);
+  weekStart.setHours(0, 0, 0, 0);
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 6);
+  return {
+    startDate: weekStart.toISOString().split("T")[0],
+    endDate: weekEnd.toISOString().split("T")[0],
+  };
+}
+
 const CACHE_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'cache');
 
 function cachePath(type) {
@@ -48,13 +63,19 @@ function classifyClaudeError(err) {
   return "other";
 }
 
+function sanitizeSurrogates(text) {
+  return text
+    .replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])/g, "")
+    .replace(/(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, "");
+}
+
 async function callClaudeWithModel(prompt, model) {
   const escaped = prompt.replace(/'/g, "'\\''");
   const { stdout } = await execAsync(
     `echo '${escaped}' | ${config.claude.cliPath} --print --model ${model}`,
     { encoding: "utf-8", timeout: 120000 }
   );
-  const result = stdout.trim();
+  const result = sanitizeSurrogates(stdout.trim());
   return result.length > 10 ? result : null;
 }
 
@@ -242,6 +263,40 @@ export async function getAccentColor() {
   return { accentColor: "#419BFF" };
 }
 
+// --- Weekly Summary: AI-generated week recap (7-day cache) ---
+
+export async function getWeeklySummary(history) {
+  const { startDate, endDate } = getWeekRange();
+  const thisWeek = history.filter((h) => h.date >= startDate);
+
+  if (thisWeek.length === 0) {
+    return { text: null, startDate, endDate };
+  }
+
+  const cached = readCache("weekly-summary", SEVEN_DAYS);
+  if (cached?.content) {
+    return { ...cached.content, generatedBy: cached.generatedBy, generatedAt: cached.generatedAt };
+  }
+
+  const serialized = thisWeek
+    .map((h) => `${h.project}: ${h.title} (${h.description})`)
+    .join("\n");
+
+  const prompt =
+    interpolate(t.prompts.weeklySummary, { startDate, endDate }) +
+    "\n" +
+    serialized;
+
+  const res = await callClaude(prompt);
+  if (res?.content) {
+    const payload = { text: res.content, startDate, endDate };
+    const written = writeCache("weekly-summary", payload, res.generatedBy);
+    return { ...payload, generatedBy: res.generatedBy, generatedAt: written.generatedAt };
+  }
+
+  return { text: null, startDate, endDate };
+}
+
 export function scheduleRefreshCycles(refreshJourney) {
   const intervalMin = config.journey.refreshIntervalMin ?? 60;
   const weekDay = config.journey.weekStartDay ?? 1;
@@ -258,7 +313,7 @@ export function scheduleRefreshCycles(refreshJourney) {
 
   cron.schedule(`0 0 * * ${weekDay}`, () => {
     console.log(`[${new Date().toISOString()}] Cron: weekly refresh`);
-    invalidateCaches("profile", "relationship", "philosophy", "avatar-decor", "accent-color");
+    invalidateCaches("profile", "relationship", "philosophy", "avatar-decor", "accent-color", "weekly-summary");
   });
 
   console.log(`  Cron: journey every ${intervalMin}m, voice daily, weekly on day ${weekDay}`);

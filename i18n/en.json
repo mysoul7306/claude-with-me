@@ -5,7 +5,8 @@
     "philosophy": "Express this week's collaboration philosophy with {{userName}} in JSON.\nFormat: { \"quote\": \"3-4 line quote. Wrap the most important line in <span> tags.\", \"explanation\": \"2-3 line explanation\" }\nBe heartfelt and genuine. Output JSON only.",
     "voice": "Say something warm and honest to {{userName}}.\n3-5 lines, 1-2 emojis.\nContext: {{daysTogether}} days together, {{totalSessions}} sessions, {{totalObservations}} records.\nOutput message only.",
     "avatarDecor": "{{userName}} has the role \"{{role}}\". Analyze this user's domain and work, then pick fitting decorative emojis.\nJSON format: { \"decorEmojis\": [\"🛰️\", \"📡\", \"🌏\", ...] }\nMinimum 3, maximum 10. Return emoji array only. Output JSON only.",
-    "accentColor": "{{userName}} has the role \"{{role}}\". Recommend a fitting theme color for this user.\nJSON format: { \"accentColor\": \"#hexcode\", \"reason\": \"why this color\" }\nOutput JSON only."
+    "accentColor": "{{userName}} has the role \"{{role}}\". Recommend a fitting theme color for this user.\nJSON format: { \"accentColor\": \"#hexcode\", \"reason\": \"why this color\" }\nOutput JSON only.",
+    "weeklySummary": "Summarize this week's work ({{startDate}}–{{endDate}}) in 5-6 lines.\nInclude project names, key achievements, and overall flow.\nTone: warm retrospective, like a colleague reflecting on shared work.\nOutput message only.\n\nWork log:"
   },
   "ui": {
     "title": "Claude with {{userName}}",
@@ -18,6 +19,8 @@
     "sectionOurJourney": "Our Journey",
     "sectionOurMilestones": "Our Milestones",
     "historyTitle": "History",
+    "weeklyTitle": "This Week",
+    "weeklyEmpty": "No journeys this week yet. Shall we start one together?",
     "statDaysTogether": "Days Together",
     "statTotalSessions": "Total Sessions",
     "statTotalObservations": "Total Observations",
