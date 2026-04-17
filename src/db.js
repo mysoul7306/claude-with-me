@@ -92,6 +92,7 @@ export function getJourneyHistory() {
        WHERE sdk.memory_session_id IS NOT NULL
          AND sdk.status != 'active'
          AND sdk.started_at_epoch < ?
+         AND latest_ss.completed IS NOT NULL
          AND ${excluded.sql}
        ORDER BY sdk.started_at_epoch DESC
        LIMIT ${config.journey.historyLimit}`
@@ -131,69 +132,4 @@ export function getLatestSummaryEpoch() {
   if (!db) return 0;
   const row = db.prepare("SELECT MAX(created_at_epoch) as latest FROM session_summaries").get();
   return row?.latest || 0;
-}
-
-export function getWeeklyActivity() {
-  if (!db) return { projects: [], stats: { totalObservations: 0, totalSessions: 0, totalProjects: 0 } };
-
-  const weekStartDay = config.journey.weekStartDay ?? 1; // 0=Sun, 1=Mon
-  const now = new Date();
-  const currentDay = now.getDay();
-  const diffToStart = (currentDay - weekStartDay + 7) % 7;
-  const weekStart = new Date(now);
-  weekStart.setDate(now.getDate() - diffToStart);
-  weekStart.setHours(0, 0, 0, 0);
-
-  const weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekStart.getDate() + 7);
-
-  const weekStartEpoch = weekStart.getTime();
-  const weekEndEpoch = weekEnd.getTime();
-
-  const excluded = buildExcludedProjectsClause("project");
-
-  const rows = db
-    .prepare(
-      `SELECT project, type, COUNT(*) as count
-       FROM observations
-       WHERE created_at_epoch >= ? AND created_at_epoch < ?
-         AND type IS NOT NULL
-         AND ${excluded.sql}
-       GROUP BY project, type
-       ORDER BY project, count DESC`
-    )
-    .all(weekStartEpoch, weekEndEpoch, ...excluded.params);
-
-  const sessionCount = db
-    .prepare(
-      `SELECT COUNT(DISTINCT memory_session_id) as count
-       FROM observations
-       WHERE created_at_epoch >= ? AND created_at_epoch < ?
-         AND ${excluded.sql}`
-    )
-    .get(weekStartEpoch, weekEndEpoch, ...excluded.params);
-
-  // Group by project
-  const projectMap = new Map();
-  for (const row of rows) {
-    const existing = projectMap.get(row.project) ?? { name: row.project, total: 0, types: {} };
-    const updatedTypes = { ...existing.types, [row.type]: row.count };
-    projectMap.set(row.project, { ...existing, types: updatedTypes, total: existing.total + row.count });
-  }
-
-  // Sort projects by total descending
-  const projects = [...projectMap.values()].sort((a, b) => b.total - a.total);
-
-  const totalObservations = projects.reduce((sum, p) => sum + p.total, 0);
-
-  return {
-    weekStart: weekStart.toISOString().split("T")[0],
-    weekEnd: new Date(weekEnd.getTime() - 1).toISOString().split("T")[0],
-    projects,
-    stats: {
-      totalObservations,
-      totalSessions: sessionCount?.count || 0,
-      totalProjects: projects.length,
-    },
-  };
 }
