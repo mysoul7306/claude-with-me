@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { config } from "./src/config.js";
 import { t, interpolate } from "./src/i18n.js";
-import { getStats, getJourneyHistory, getLatestSummaryEpoch } from "./src/db.js";
+import { getStats, getJourneyHistory, getLatestSummaryEpoch, getWeeklyActivity } from "./src/db.js";
 import {
   getProfile, getRelationship, getPhilosophy, getVoice,
   getAvatarDecor, getAccentColor,
@@ -42,6 +42,17 @@ app.get("/api/journey", async (_req, res) => {
   res.json(result);
 });
 
+const WEEKLY_TTL = JOURNEY_TTL;
+
+app.get("/api/weekly", async (_req, res) => {
+  const cached = readCache("weekly", WEEKLY_TTL);
+  if (cached?.content) {
+    return res.json({ ...cached.content, generatedAt: cached.generatedAt });
+  }
+  const result = await buildWeekly();
+  res.json(result);
+});
+
 app.get("/api/profile", async (_req, res) => res.json(await getProfile(getStats())));
 app.get("/api/relationship", async (_req, res) => res.json(await getRelationship(getStats())));
 app.get("/api/philosophy", async (_req, res) => res.json(await getPhilosophy(getStats())));
@@ -75,6 +86,31 @@ async function buildJourney() {
   return { ...payload, generatedAt: written.generatedAt };
 }
 
+async function buildWeekly() {
+  const weekly = getWeeklyActivity();
+
+  const allProjects = weekly.projects.map((p) => p.name);
+  const emojis = await getProjectEmojis(allProjects);
+
+  const projectsWithEmoji = weekly.projects.map((p) => ({
+    ...p,
+    emoji: emojis[p.name] || "",
+  }));
+
+  const payload = { ...weekly, projects: projectsWithEmoji };
+  const written = writeCache("weekly", payload);
+  return { ...payload, generatedAt: written.generatedAt };
+}
+
+async function refreshWeekly() {
+  try {
+    await buildWeekly();
+    console.log(`[${new Date().toISOString()}] Weekly: refreshed`);
+  } catch (err) {
+    console.warn("[weekly] Refresh failed:", err.message);
+  }
+}
+
 async function refreshJourney() {
   const currentEpoch = getLatestSummaryEpoch();
   if (currentEpoch === lastKnownEpoch) {
@@ -94,8 +130,9 @@ async function refreshJourney() {
 app.listen(PORT, () => {
   console.log(`\n  claude-with-me is running at http://localhost:${PORT}`);
 
-  scheduleRefreshCycles(refreshJourney);
+  scheduleRefreshCycles(refreshJourney, refreshWeekly);
   refreshJourney();
+  refreshWeekly();
 
   const hookResult = patchClaudeMemHooks(config.claudeMem);
   console.log(`  [hooks] ${hookResult.patched ? hookResult.message : "No patch needed: " + hookResult.message}`);

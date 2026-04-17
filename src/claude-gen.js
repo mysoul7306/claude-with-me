@@ -242,13 +242,14 @@ export async function getAccentColor() {
   return { accentColor: "#419BFF" };
 }
 
-export function scheduleRefreshCycles(refreshJourney) {
+export function scheduleRefreshCycles(refreshJourney, refreshWeekly) {
   const intervalMin = config.journey.refreshIntervalMin ?? 60;
   const weekDay = config.journey.weekStartDay ?? 1;
 
   cron.schedule(`*/${intervalMin} * * * *`, () => {
-    console.log(`[${new Date().toISOString()}] Cron: journey refresh`);
+    console.log(`[${new Date().toISOString()}] Cron: journey + weekly refresh`);
     refreshJourney();
+    refreshWeekly();
   });
 
   cron.schedule("0 0 * * *", () => {
@@ -258,8 +259,8 @@ export function scheduleRefreshCycles(refreshJourney) {
 
   cron.schedule(`0 0 * * ${weekDay}`, () => {
     console.log(`[${new Date().toISOString()}] Cron: weekly refresh`);
-    invalidateCaches("profile", "relationship", "philosophy", "avatar-decor", "accent-color");
+    invalidateCaches("profile", "relationship", "philosophy", "avatar-decor", "accent-color", "weekly");
   });
 
-  console.log(`  Cron: journey every ${intervalMin}m, voice daily, weekly on day ${weekDay}`);
+  console.log(`  Cron: journey+weekly every ${intervalMin}m, voice daily, weekly on day ${weekDay}`);
 }
