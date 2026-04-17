@@ -631,6 +631,67 @@
     to { transform: rotate(calc(var(--orbit-start, 0deg) + 360deg)) translateX(var(--orbit-radius, 100px)) rotate(calc(-1 * (var(--orbit-start, 0deg) + 360deg))); }
   }
 
+  /* ===== WEEKLY ACTIVITY ===== */
+  .weekly-section {
+    margin-bottom: 56px;
+  }
+
+  .weekly-date-range {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+  }
+
+  .weekly-project {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+  }
+
+  .weekly-project-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .weekly-project-name {
+    font-weight: 700;
+    color: var(--text-bright);
+    font-size: 0.95rem;
+  }
+
+  .weekly-project-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+  }
+
+  .weekly-types {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .weekly-type-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 500;
+  }
+
+  .weekly-stats {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin-top: 16px;
+    text-align: center;
+  }
+
   /* ===== ERROR MESSAGE ===== */
   .error-message {
     color: #f59e0b;
@@ -718,6 +779,12 @@
     </div>
   </div>
 
+  <!-- WEEKLY ACTIVITY -->
+  <div class="weekly-section" id="weekly-section" style="display:none;">
+    <div class="section-title"><span class="icon">📊</span> <span id="weekly-title">This Week</span> <span class="section-meta" id="weekly-meta"></span></div>
+    <div id="weekly-content" class="weekly-content"></div>
+  </div>
+
   <!-- JOURNEY TIMELINE -->
   <div class="timeline-section">
     <div class="section-title" id="section-our-journey"><span class="icon">📅</span> Our Journey <span class="section-meta" id="journey-meta"></span></div>
@@ -794,6 +861,9 @@ async function loadConfig() {
     applyI18nSectionTitle('section-our-philosophy', '💡', ui.sectionOurPhilosophy || 'Our Philosophy');
     applyI18nSectionTitle('section-our-journey', '📅', ui.sectionOurJourney || 'Our Journey');
     applyI18nSectionTitle('section-our-milestones', '📊', ui.sectionOurMilestones || 'Our Milestones');
+
+    const weeklyTitleEl = document.getElementById('weekly-title');
+    if (weeklyTitleEl) weeklyTitleEl.textContent = ui.weeklyTitle || 'This Week';
 
     return cfg;
   } catch (err) {
@@ -890,9 +960,10 @@ function setSectionMeta(metaId, data) {
 
 async function load() {
   try {
-    const [stats, journey, profile, relationship, philosophy, voice] = await Promise.all([
+    const [stats, journey, weekly, profile, relationship, philosophy, voice] = await Promise.all([
       fetch('/api/stats').then(r => r.json()),
       fetch('/api/journey').then(r => r.json()),
+      fetch('/api/weekly').then(r => r.json()),
       fetch('/api/profile').then(r => r.json()),
       fetch('/api/relationship').then(r => r.json()),
       fetch('/api/philosophy').then(r => r.json()),
@@ -944,6 +1015,8 @@ async function load() {
     }
 
     renderJourney(journey);
+    renderWeekly(weekly);
+    setSectionMeta('weekly-meta', weekly);
 
     // Section meta (AI model + last refreshed)
     setSectionMeta('profile-meta', profile);
@@ -1016,6 +1089,52 @@ async function load() {
   }
 }
 
+function renderWeekly(weekly) {
+  const section = document.getElementById('weekly-section');
+  const content = document.getElementById('weekly-content');
+  if (!section || !content) return;
+
+  if (!weekly.projects || weekly.projects.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+
+  section.style.display = '';
+
+  const TYPE_BADGES = {
+    bugfix:    { emoji: '🔴', color: '#ef4444' },
+    feature:   { emoji: '🟣', color: '#f59e0b' },
+    change:    { emoji: '✅', color: '#22c55e' },
+    discovery: { emoji: '🔵', color: '#3b82f6' },
+    decision:  { emoji: '⚖️', color: '#06b6d4' },
+    refactor:  { emoji: '🔄', color: '#a855f7' },
+  };
+
+  const ui = appConfig.ui || {};
+
+  content.innerHTML =
+    `<div class="weekly-date-range">${weekly.weekStart} ~ ${weekly.weekEnd}</div>` +
+    weekly.projects.map(p => {
+      const typeBadges = Object.entries(p.types)
+        .sort((a, b) => b[1] - a[1])
+        .map(([type, count]) => {
+          const badge = TYPE_BADGES[type] || { emoji: '📌', color: '#94a3b8' };
+          return `<span class="weekly-type-badge" style="background:${badge.color}15;color:${badge.color};">${badge.emoji} ${type} ×${count}</span>`;
+        })
+        .join('');
+
+      return `<div class="weekly-project">
+        <div class="weekly-project-header">
+          <span>${p.emoji || '📂'}</span>
+          <span class="weekly-project-name">${p.name}</span>
+          <span class="weekly-project-count">(${p.total})</span>
+        </div>
+        <div class="weekly-types">${typeBadges}</div>
+      </div>`;
+    }).join('') +
+    `<div class="weekly-stats">${weekly.stats.totalObservations} ${ui.weeklyObservations || 'observations'} · ${weekly.stats.totalSessions} ${ui.weeklySessions || 'sessions'} · ${weekly.stats.totalProjects} ${ui.weeklyProjects || 'projects'}</div>`;
+}
+
 function renderJourney(journey) {
   // Observations type badge config
   const TYPE_BADGES = {
@@ -1067,9 +1186,14 @@ function renderJourney(journey) {
 
 async function pollJourney() {
   try {
-    const journey = await fetch('/api/journey').then(r => r.json());
+    const [journey, weekly] = await Promise.all([
+      fetch('/api/journey').then(r => r.json()),
+      fetch('/api/weekly').then(r => r.json()),
+    ]);
     renderJourney(journey);
+    renderWeekly(weekly);
     setSectionMeta('journey-meta', journey);
+    setSectionMeta('weekly-meta', weekly);
   } catch (err) {
     console.warn('Journey poll failed:', err);
   }
