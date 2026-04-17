@@ -21,6 +21,10 @@
     "statDaysTogether": "Days Together",
     "statTotalSessions": "Total Sessions",
     "statTotalObservations": "Total Observations",
-    "statProjects": "Projects Explored"
+    "statProjects": "Projects Explored",
+    "weeklyTitle": "This Week",
+    "weeklyObservations": "observations",
+    "weeklySessions": "sessions",
+    "weeklyProjects": "projects"
   }
 }

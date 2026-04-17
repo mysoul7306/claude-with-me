@@ -21,6 +21,10 @@
     "statDaysTogether": "함께한 날",
     "statTotalSessions": "총 세션",
     "statTotalObservations": "총 기록",
-    "statProjects": "진행해온 프로젝트"
+    "statProjects": "진행해온 프로젝트",
+    "weeklyTitle": "This Week",
+    "weeklyObservations": "observations",
+    "weeklySessions": "sessions",
+    "weeklyProjects": "projects"
   }
 }
