@@ -57,60 +57,50 @@ function buildExcludedProjectsClause(columnExpr) {
 export function getJourneyHistory() {
   if (!db) return [];
 
-  const excluded = buildExcludedProjectsClause("project");
-  const recentActivityCutoff = Date.now() - 10 * 60 * 1000;
+  const excluded = buildExcludedProjectsClause("sdk.project");
+  const recentCutoff = Date.now() - 5 * 60 * 1000;
 
   const rows = db
     .prepare(
       `SELECT
-         COALESCE(first.project, comp.project) as project,
-         first.memory_session_id,
-         first.request, first.investigated,
-         comp.completed, comp.created_at, comp.created_at_epoch,
-         sdk.custom_title
-       FROM (
-         SELECT memory_session_id, project, request, investigated, created_at_epoch
-         FROM (
-           SELECT memory_session_id, project, request, investigated, created_at_epoch,
-                  ROW_NUMBER() OVER (
-                    PARTITION BY memory_session_id
-                    ORDER BY created_at_epoch ASC
-                  ) as rn
-           FROM session_summaries
-           WHERE ${excluded.sql}
-         )
-         WHERE rn = 1
-       ) first
-       INNER JOIN (
-         SELECT memory_session_id, project, completed,
-                created_at, created_at_epoch,
+         sdk.memory_session_id,
+         sdk.project,
+         sdk.custom_title,
+         sdk.started_at,
+         sdk.started_at_epoch,
+         first_ss.request,
+         first_ss.investigated,
+         latest_ss.completed
+       FROM sdk_sessions sdk
+       LEFT JOIN (
+         SELECT memory_session_id, request, investigated,
                 ROW_NUMBER() OVER (
                   PARTITION BY memory_session_id
                   ORDER BY created_at_epoch ASC
                 ) as rn
          FROM session_summaries
+       ) first_ss ON first_ss.memory_session_id = sdk.memory_session_id AND first_ss.rn = 1
+       LEFT JOIN (
+         SELECT memory_session_id, completed,
+                ROW_NUMBER() OVER (
+                  PARTITION BY memory_session_id
+                  ORDER BY created_at_epoch DESC
+                ) as rn
+         FROM session_summaries
          WHERE completed IS NOT NULL AND completed != ''
-       ) comp ON first.memory_session_id = comp.memory_session_id
-         AND comp.rn = 1
-       LEFT JOIN sdk_sessions sdk
-         ON sdk.memory_session_id = first.memory_session_id
-       WHERE first.memory_session_id NOT IN (
-         SELECT memory_session_id FROM sdk_sessions
-         WHERE status = 'active' AND memory_session_id IS NOT NULL
-       )
-       AND first.memory_session_id NOT IN (
-         SELECT memory_session_id FROM session_summaries
-         WHERE created_at_epoch >= ?
-         GROUP BY memory_session_id
-       )
-       ORDER BY comp.created_at_epoch DESC
+       ) latest_ss ON latest_ss.memory_session_id = sdk.memory_session_id AND latest_ss.rn = 1
+       WHERE sdk.memory_session_id IS NOT NULL
+         AND sdk.status != 'active'
+         AND sdk.started_at_epoch < ?
+         AND ${excluded.sql}
+       ORDER BY sdk.started_at_epoch DESC
        LIMIT ${config.journey.historyLimit}`
     )
-    .all(...excluded.params, recentActivityCutoff);
+    .all(recentCutoff, ...excluded.params);
 
   if (rows.length === 0) return [];
 
-  // Fetch observations types for matched sessions
+  // Fetch observation types for matched sessions
   const sessionIds = rows.map((r) => r.memory_session_id);
   const obsPlaceholders = sessionIds.map(() => "?").join(",");
   const obsRows = db
@@ -122,13 +112,14 @@ export function getJourneyHistory() {
     )
     .all(...sessionIds);
 
-  const typesMap = obsRows.reduce((acc, obs) => {
-    const existing = acc.get(obs.memory_session_id) ?? [];
-    return acc.set(obs.memory_session_id, [...existing, obs.type]);
-  }, new Map());
+  const typesMap = new Map();
+  for (const obs of obsRows) {
+    const existing = typesMap.get(obs.memory_session_id) ?? [];
+    typesMap.set(obs.memory_session_id, [...existing, obs.type]);
+  }
 
   return rows.map((r) => ({
-    date: r.created_at ? r.created_at.split("T")[0] : "unknown",
+    date: r.started_at ? r.started_at.split("T")[0] : "unknown",
     project: r.project || "General",
     title: r.custom_title || r.request || r.investigated || "Session",
     description: r.completed || "",
@@ -140,4 +131,69 @@ export function getLatestSummaryEpoch() {
   if (!db) return 0;
   const row = db.prepare("SELECT MAX(created_at_epoch) as latest FROM session_summaries").get();
   return row?.latest || 0;
+}
+
+export function getWeeklyActivity() {
+  if (!db) return { projects: [], stats: { totalObservations: 0, totalSessions: 0, totalProjects: 0 } };
+
+  const weekStartDay = config.journey.weekStartDay ?? 1; // 0=Sun, 1=Mon
+  const now = new Date();
+  const currentDay = now.getDay();
+  const diffToStart = (currentDay - weekStartDay + 7) % 7;
+  const weekStart = new Date(now);
+  weekStart.setDate(now.getDate() - diffToStart);
+  weekStart.setHours(0, 0, 0, 0);
+
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate() + 7);
+
+  const weekStartEpoch = weekStart.getTime();
+  const weekEndEpoch = weekEnd.getTime();
+
+  const excluded = buildExcludedProjectsClause("project");
+
+  const rows = db
+    .prepare(
+      `SELECT project, type, COUNT(*) as count
+       FROM observations
+       WHERE created_at_epoch >= ? AND created_at_epoch < ?
+         AND type IS NOT NULL
+         AND ${excluded.sql}
+       GROUP BY project, type
+       ORDER BY project, count DESC`
+    )
+    .all(weekStartEpoch, weekEndEpoch, ...excluded.params);
+
+  const sessionCount = db
+    .prepare(
+      `SELECT COUNT(DISTINCT memory_session_id) as count
+       FROM observations
+       WHERE created_at_epoch >= ? AND created_at_epoch < ?
+         AND ${excluded.sql}`
+    )
+    .get(weekStartEpoch, weekEndEpoch, ...excluded.params);
+
+  // Group by project
+  const projectMap = new Map();
+  for (const row of rows) {
+    const existing = projectMap.get(row.project) ?? { name: row.project, total: 0, types: {} };
+    const updatedTypes = { ...existing.types, [row.type]: row.count };
+    projectMap.set(row.project, { ...existing, types: updatedTypes, total: existing.total + row.count });
+  }
+
+  // Sort projects by total descending
+  const projects = [...projectMap.values()].sort((a, b) => b.total - a.total);
+
+  const totalObservations = projects.reduce((sum, p) => sum + p.total, 0);
+
+  return {
+    weekStart: weekStart.toISOString().split("T")[0],
+    weekEnd: new Date(weekEnd.getTime() - 1).toISOString().split("T")[0],
+    projects,
+    stats: {
+      totalObservations,
+      totalSessions: sessionCount?.count || 0,
+      totalProjects: projects.length,
+    },
+  };
 }
