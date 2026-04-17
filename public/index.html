@@ -527,7 +527,7 @@
     display: flex;
     align-items: center;
     gap: 0;
-    min-width: max-content;
+    width: 100%;
   }
 
   .footer-journey .journey-node {
@@ -536,6 +536,7 @@
     align-items: center;
     gap: 4px;
     flex-shrink: 0;
+    width: 48px;
   }
 
   .footer-journey .journey-node .node-emoji {
@@ -551,10 +552,9 @@
   }
 
   .footer-journey .journey-line {
-    width: 130px;
+    flex: 1;
     height: 2px;
     background: linear-gradient(90deg, var(--accent-blue), var(--accent-user));
-    flex-shrink: 0;
     position: relative;
     opacity: 0.5;
   }
@@ -630,6 +630,8 @@
     from { transform: rotate(var(--orbit-start, 0deg)) translateX(var(--orbit-radius, 100px)) rotate(calc(-1 * var(--orbit-start, 0deg))); }
     to { transform: rotate(calc(var(--orbit-start, 0deg) + 360deg)) translateX(var(--orbit-radius, 100px)) rotate(calc(-1 * (var(--orbit-start, 0deg) + 360deg))); }
   }
+
+
 
   /* ===== ERROR MESSAGE ===== */
   .error-message {
@@ -935,16 +937,16 @@ async function load() {
       const subtitleEl = document.getElementById('subtitle');
       if (subtitleEl && bondText) subtitleEl.textContent = bondText.replace(/\n/g, ' — ');
 
-      const kwColors = ['orange','blue','cyan','green','pink'];
+      const kwColors = ['orange','blue','cyan','green','pink','purple'];
+      const shuffled = [...kwColors].sort(() => Math.random() - 0.5);
       const kwLimit = window.innerWidth <= 480 ? 8 : 15;
       document.getElementById('keywords').innerHTML =
         (rel.keywords || []).slice(0, kwLimit).map((kw, i) =>
-          `<span class="keyword ${kwColors[i % kwColors.length]}">${kw}</span>`
+          `<span class="keyword ${shuffled[i % shuffled.length]}">${kw}</span>`
         ).join('');
     }
 
     renderJourney(journey);
-
     // Section meta (AI model + last refreshed)
     setSectionMeta('profile-meta', profile);
     setSectionMeta('relationship-meta', relationship);

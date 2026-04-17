@@ -57,60 +57,51 @@ function buildExcludedProjectsClause(columnExpr) {
 export function getJourneyHistory() {
   if (!db) return [];
 
-  const excluded = buildExcludedProjectsClause("project");
-  const recentActivityCutoff = Date.now() - 10 * 60 * 1000;
+  const excluded = buildExcludedProjectsClause("sdk.project");
+  const recentCutoff = Date.now() - 5 * 60 * 1000;
 
   const rows = db
     .prepare(
       `SELECT
-         COALESCE(first.project, comp.project) as project,
-         first.memory_session_id,
-         first.request, first.investigated,
-         comp.completed, comp.created_at, comp.created_at_epoch,
-         sdk.custom_title
-       FROM (
-         SELECT memory_session_id, project, request, investigated, created_at_epoch
-         FROM (
-           SELECT memory_session_id, project, request, investigated, created_at_epoch,
-                  ROW_NUMBER() OVER (
-                    PARTITION BY memory_session_id
-                    ORDER BY created_at_epoch ASC
-                  ) as rn
-           FROM session_summaries
-           WHERE ${excluded.sql}
-         )
-         WHERE rn = 1
-       ) first
-       INNER JOIN (
-         SELECT memory_session_id, project, completed,
-                created_at, created_at_epoch,
+         sdk.memory_session_id,
+         sdk.project,
+         sdk.custom_title,
+         sdk.started_at,
+         sdk.started_at_epoch,
+         first_ss.request,
+         first_ss.investigated,
+         latest_ss.completed
+       FROM sdk_sessions sdk
+       LEFT JOIN (
+         SELECT memory_session_id, request, investigated,
                 ROW_NUMBER() OVER (
                   PARTITION BY memory_session_id
                   ORDER BY created_at_epoch ASC
                 ) as rn
          FROM session_summaries
+       ) first_ss ON first_ss.memory_session_id = sdk.memory_session_id AND first_ss.rn = 1
+       LEFT JOIN (
+         SELECT memory_session_id, completed,
+                ROW_NUMBER() OVER (
+                  PARTITION BY memory_session_id
+                  ORDER BY created_at_epoch DESC
+                ) as rn
+         FROM session_summaries
          WHERE completed IS NOT NULL AND completed != ''
-       ) comp ON first.memory_session_id = comp.memory_session_id
-         AND comp.rn = 1
-       LEFT JOIN sdk_sessions sdk
-         ON sdk.memory_session_id = first.memory_session_id
-       WHERE first.memory_session_id NOT IN (
-         SELECT memory_session_id FROM sdk_sessions
-         WHERE status = 'active' AND memory_session_id IS NOT NULL
-       )
-       AND first.memory_session_id NOT IN (
-         SELECT memory_session_id FROM session_summaries
-         WHERE created_at_epoch >= ?
-         GROUP BY memory_session_id
-       )
-       ORDER BY comp.created_at_epoch DESC
+       ) latest_ss ON latest_ss.memory_session_id = sdk.memory_session_id AND latest_ss.rn = 1
+       WHERE sdk.memory_session_id IS NOT NULL
+         AND sdk.status != 'active'
+         AND sdk.started_at_epoch < ?
+         AND latest_ss.completed IS NOT NULL
+         AND ${excluded.sql}
+       ORDER BY sdk.started_at_epoch DESC
        LIMIT ${config.journey.historyLimit}`
     )
-    .all(...excluded.params, recentActivityCutoff);
+    .all(recentCutoff, ...excluded.params);
 
   if (rows.length === 0) return [];
 
-  // Fetch observations types for matched sessions
+  // Fetch observation types for matched sessions
   const sessionIds = rows.map((r) => r.memory_session_id);
   const obsPlaceholders = sessionIds.map(() => "?").join(",");
   const obsRows = db
@@ -122,13 +113,14 @@ export function getJourneyHistory() {
     )
     .all(...sessionIds);
 
-  const typesMap = obsRows.reduce((acc, obs) => {
-    const existing = acc.get(obs.memory_session_id) ?? [];
-    return acc.set(obs.memory_session_id, [...existing, obs.type]);
-  }, new Map());
+  const typesMap = new Map();
+  for (const obs of obsRows) {
+    const existing = typesMap.get(obs.memory_session_id) ?? [];
+    typesMap.set(obs.memory_session_id, [...existing, obs.type]);
+  }
 
   return rows.map((r) => ({
-    date: r.created_at ? r.created_at.split("T")[0] : "unknown",
+    date: r.started_at ? r.started_at.split("T")[0] : "unknown",
     project: r.project || "General",
     title: r.custom_title || r.request || r.investigated || "Session",
     description: r.completed || "",
