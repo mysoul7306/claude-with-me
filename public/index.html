@@ -527,7 +527,7 @@
     display: flex;
     align-items: center;
     gap: 0;
-    min-width: max-content;
+    width: 100%;
   }
 
   .footer-journey .journey-node {
@@ -553,8 +553,6 @@
 
   .footer-journey .journey-line {
     flex: 1;
-    min-width: 60px;
-    max-width: 130px;
     height: 2px;
     background: linear-gradient(90deg, var(--accent-blue), var(--accent-user));
     position: relative;
@@ -939,11 +937,12 @@ async function load() {
       const subtitleEl = document.getElementById('subtitle');
       if (subtitleEl && bondText) subtitleEl.textContent = bondText.replace(/\n/g, ' — ');
 
-      const kwColors = ['orange','blue','cyan','green','pink'];
+      const kwColors = ['orange','blue','cyan','green','pink','purple'];
+      const shuffled = [...kwColors].sort(() => Math.random() - 0.5);
       const kwLimit = window.innerWidth <= 480 ? 8 : 15;
       document.getElementById('keywords').innerHTML =
         (rel.keywords || []).slice(0, kwLimit).map((kw, i) =>
-          `<span class="keyword ${kwColors[i % kwColors.length]}">${kw}</span>`
+          `<span class="keyword ${shuffled[i % shuffled.length]}">${kw}</span>`
         ).join('');
     }
 
