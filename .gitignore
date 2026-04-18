@@ -8,4 +8,5 @@ logs/
 .idea/
 .superpowers/
 assets/superpowers/
+docs/superpowers/
 scripts/test-docker.sh
