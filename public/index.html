@@ -8,7 +8,8 @@
 <link rel="stylesheet" href="/fonts/local-fonts.css">
 <style>
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html { overflow-x: hidden; }
 
   :root {
     --bg: #0a0e1a;
@@ -328,15 +329,19 @@
 
   @media (max-width: 480px) {
     .keywords {
-      flex-wrap: nowrap;
+      display: grid;
+      grid-auto-flow: column;
+      grid-template-rows: repeat(2, auto);
+      gap: 8px;
       overflow-x: auto;
+      overflow-y: hidden;
       justify-content: flex-start;
       padding-bottom: 8px;
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
     }
     .keywords::-webkit-scrollbar { display: none; }
-    .keyword { flex-shrink: 0; }
+    .keyword { flex-shrink: 0; white-space: nowrap; }
   }
 
   .keyword {
@@ -614,6 +619,7 @@
     opacity: 1;
     animation: float-decor var(--float-duration, 4s) ease-in-out infinite;
     animation-delay: var(--float-delay, 0s);
+    will-change: transform;
   }
   .avatar-decor.outer {
     top: calc(50% - var(--decor-font) / 2);
@@ -621,6 +627,7 @@
     opacity: 1;
     animation: orbit-decor var(--orbit-duration, 20s) linear infinite;
     animation-delay: var(--orbit-delay, 0s);
+    will-change: transform;
   }
   @keyframes float-decor {
     0%, 100% { transform: translate(0, 0) scale(1); }
@@ -645,9 +652,10 @@
 
   /* ===== RESPONSIVE ===== */
   @media (max-width: 768px) {
+    .container { padding: 24px 16px 60px; }
     .header .clock { font-size: 3rem; }
     .header h1 { font-size: 2.1rem; }
-    .profile-card { grid-template-columns: 1fr; text-align: center; }
+    .profile-card { grid-template-columns: 1fr; text-align: center; padding: 24px 16px; }
     .avatar-area { margin-bottom: 16px; }
     .trait { border-left: none; border-top: 3px solid var(--accent-blue); }
     .trait:nth-child(2) { border-top-color: var(--accent-user); }
@@ -828,46 +836,55 @@ async function loadAvatarDecor() {
   } catch { /* use fallback */ }
   const container = document.getElementById('avatar-orbit');
   if (!container) return;
-  const half = Math.ceil(emojis.length / 2);
-  const innerEmojis = emojis.slice(0, half);
-  const outerEmojis = emojis.slice(half);
 
-  const orbitSize = container.offsetWidth;
-  const center = orbitSize / 2;
-  const avatarEl = container.querySelector('.avatar');
-  const avatarR = avatarEl ? avatarEl.offsetWidth / 2 : 80;
-  const emojiHalf = avatarR * 0.07;
-  const innerR = avatarR * 0.85;
-  const outerR = avatarR * 1.1;
+  function placeEmojis() {
+    const half = Math.ceil(emojis.length / 2);
+    const innerEmojis = emojis.slice(0, half);
+    const outerEmojis = emojis.slice(half);
 
-  innerEmojis.forEach((emoji, i) => {
-    const el = document.createElement('span');
-    el.className = 'avatar-decor inner';
-    el.textContent = emoji;
-    const angle = (2 * Math.PI / innerEmojis.length) * i - Math.PI / 2;
-    const x = center + innerR * Math.cos(angle) - emojiHalf;
-    const y = center + innerR * Math.sin(angle) - emojiHalf;
-    el.style.setProperty('--decor-top', `${y}px`);
-    el.style.setProperty('--decor-left', `${x}px`);
-    el.style.setProperty('--float-duration', `${3 + (i % 4) * 1.5}s`);
-    el.style.setProperty('--float-delay', `${-i * 0.8}s`);
-    el.style.setProperty('--float-x', `${5 + (i % 4) * 2}px`);
-    el.style.setProperty('--float-y', `${-6 - (i % 4) * 2}px`);
-    container.appendChild(el);
-  });
+    const orbitSize = container.offsetWidth;
+    if (orbitSize === 0) {
+      requestAnimationFrame(placeEmojis);
+      return;
+    }
+    const center = orbitSize / 2;
+    const avatarEl = container.querySelector('.avatar');
+    const avatarR = avatarEl ? avatarEl.offsetWidth / 2 : 80;
+    const emojiHalf = avatarR * 0.07;
+    const innerR = avatarR * 0.85;
+    const outerR = avatarR * 1.1;
 
-  outerEmojis.forEach((emoji, i) => {
-    const el = document.createElement('span');
-    el.className = 'avatar-decor outer';
-    el.textContent = emoji;
-    const startAngle = (360 / outerEmojis.length) * i;
-    const duration = 20 + i * 3;
-    el.style.setProperty('--orbit-start', `${startAngle}deg`);
-    el.style.setProperty('--orbit-radius', `${outerR}px`);
-    el.style.setProperty('--orbit-duration', `${duration}s`);
-    el.style.setProperty('--orbit-delay', `${-duration * (i / outerEmojis.length)}s`);
-    container.appendChild(el);
-  });
+    innerEmojis.forEach((emoji, i) => {
+      const el = document.createElement('span');
+      el.className = 'avatar-decor inner';
+      el.textContent = emoji;
+      const angle = (2 * Math.PI / innerEmojis.length) * i - Math.PI / 2;
+      const x = center + innerR * Math.cos(angle) - emojiHalf;
+      const y = center + innerR * Math.sin(angle) - emojiHalf;
+      el.style.setProperty('--decor-top', `${y}px`);
+      el.style.setProperty('--decor-left', `${x}px`);
+      el.style.setProperty('--float-duration', `${3 + (i % 4) * 1.5}s`);
+      el.style.setProperty('--float-delay', `${-i * 0.8}s`);
+      el.style.setProperty('--float-x', `${5 + (i % 4) * 2}px`);
+      el.style.setProperty('--float-y', `${-6 - (i % 4) * 2}px`);
+      container.appendChild(el);
+    });
+
+    outerEmojis.forEach((emoji, i) => {
+      const el = document.createElement('span');
+      el.className = 'avatar-decor outer';
+      el.textContent = emoji;
+      const startAngle = (360 / outerEmojis.length) * i;
+      const duration = 20 + i * 3;
+      el.style.setProperty('--orbit-start', `${startAngle}deg`);
+      el.style.setProperty('--orbit-radius', `${outerR}px`);
+      el.style.setProperty('--orbit-duration', `${duration}s`);
+      el.style.setProperty('--orbit-delay', `${-duration * (i / outerEmojis.length)}s`);
+      container.appendChild(el);
+    });
+  }
+
+  requestAnimationFrame(placeEmojis);
 }
 
 function renderSection(elementId, data, renderFn) {
@@ -1047,7 +1064,7 @@ function renderJourney(journey) {
   // Weekly Summary card
   const ws = journey.weeklySummary;
   if (ws) {
-    const dateFmt = new Intl.DateTimeFormat(navigator.language, { month: 'short', day: 'numeric' });
+    const dateFmt = new Intl.DateTimeFormat(appConfig.language || navigator.language, { month: 'short', day: 'numeric' });
     const rangeStart = dateFmt.format(new Date(ws.startDate + 'T00:00:00'));
     const rangeEnd = dateFmt.format(new Date(ws.endDate + 'T00:00:00'));
     const weeklyTitle = appConfig.ui?.weeklyTitle || 'This Week';
@@ -1066,14 +1083,18 @@ function renderJourney(journey) {
         });
       html += `<div style="margin-bottom:28px;padding:20px;background:color-mix(in srgb, var(--accent-user) 5%, var(--card-bg));border:1px solid color-mix(in srgb, var(--accent-user) 20%, transparent);border-radius:12px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-          <h3 style="color:var(--accent-user);font-size:1.1rem;margin:0;">📅 ${weeklyTitle} (${rangeStart} – ${rangeEnd})</h3>
+          <div>
+            <h3 style="color:var(--accent-user);font-size:1.1rem;margin:0;">📅 ${weeklyTitle}</h3>
+            <div style="color:#94a3b8;font-size:0.8rem;margin-top:2px;">${rangeStart} – ${rangeEnd}</div>
+          </div>
           ${modelBadge}
         </div>
         <div style="color:#cbd5e1;font-size:0.9rem;line-height:1.7;white-space:pre-line;">${weeklyBody}</div>
       </div>`;
     } else {
       html += `<div style="margin-bottom:28px;padding:20px;background:color-mix(in srgb, var(--accent-user) 3%, var(--card-bg));border:1px dashed color-mix(in srgb, var(--accent-user) 15%, transparent);border-radius:12px;text-align:center;">
-        <h3 style="color:var(--accent-user);font-size:1.1rem;margin:0 0 8px 0;">📅 ${weeklyTitle} (${rangeStart} – ${rangeEnd})</h3>
+        <h3 style="color:var(--accent-user);font-size:1.1rem;margin:0;">📅 ${weeklyTitle}</h3>
+        <div style="color:#94a3b8;font-size:0.8rem;margin-top:2px;margin-bottom:8px;">${rangeStart} – ${rangeEnd}</div>
         <div style="color:#64748b;font-size:0.85rem;">${appConfig.ui?.weeklyEmpty || 'No journeys this week yet.'}</div>
       </div>`;
     }
