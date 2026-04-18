@@ -82,10 +82,11 @@ wsl --install
 | `port` | 서버 포트 | `3000` |
 | `language` | 대시보드 언어 (`en` / `ko`) | `"en"` |
 | `accentColor` | 테마 색상 (hex). 미지정 시 Claude가 추천 | `"#419BFF"` |
-| `journey.todoLimit` | TODO 표시 개수 | `10` |
-| `journey.todoTtlDays` | N일 이상 된 TODO 자동 만료 | `14` |
 | `journey.historyLimit` | History 표시 개수 | `20` |
-| `claude.model` | Claude 모델 (`opus` / `sonnet`) | `"opus"` |
+| `journey.excludedProjectNames` | 노이즈로 필터링할 프로젝트명 | `["Workspaces", "Workspace", "observer-sessions"]` |
+| `journey.weekStartDay` | 주간 갱신 요일 — 프로필, 관계, 철학, 주간 요약 (0=일, 1=월) | `1` |
+| `journey.refreshIntervalMin` | History 갱신 주기 (분) | `60` |
+| `claude.modelPriority` | 시도할 모델 순서. 운영 실패(rate limit/timeout/unavailable) 시에만 다음 모델로 fallback | `["opus", "sonnet"]` |
 | `claude.cliPath` | Claude CLI 경로 | `"claude"` |
 
 ### claude-mem 연동 설정
@@ -157,25 +158,43 @@ claude-mem DB ──> Express API ──> Claude CLI ──> Dashboard
 ```
 
 1. **claude-mem**이 Claude Code 세션을 SQLite DB에 기록
-2. **서버**가 DB를 읽어 통계, TODO, History 제공
-3. **Claude CLI**가 프로필, 관계, 철학을 동적 생성 (캐시 적용)
+2. **서버**가 DB를 읽어 통계와 History 제공
+3. **Claude CLI**가 프로필, 관계, 철학, 주간 요약을 동적 생성 (캐시 적용)
 4. **대시보드**가 모든 정보를 한 페이지에 시각화
 
 런처가 Node.js 런타임을 자동 탐지(mise, nvm, system)하므로, Node.js 업그레이드 시 재설치가 필요 없습니다.
 
 ## 예상 비용
 
-claude-with-me는 동적 콘텐츠 생성에 Claude Code CLI (`claude --print`)를 사용합니다. 이는 [Claude Code 구독](https://claude.ai/code)에 포함되어 있으며, **별도 API 요금이 발생하지 않습니다.**
+claude-with-me는 동적 콘텐츠 생성에 Claude Code CLI (`claude --print`)를 사용합니다.
 
-| 콘텐츠 | 캐시 기간 | 월간 재생성 횟수 |
-|--------|----------|----------------|
-| 프로필, 관계, 철학 | 7일 | 각 ~4회 |
-| 아바타 장식, 테마 색상 | 7일 | 각 ~4회 |
-| 보이스 (푸터 메시지) | 1일 | ~30회 |
+### 모델 우선순위
 
-**구독 사용량 영향:** 미미합니다. 월 약 50회 CLI 호출, 대부분 캐시로 처리.
+기본적으로 Opus를 먼저 시도하고, **명시적인 운영 실패**(rate limit, timeout, provider unavailable)일 때만 Sonnet으로 fallback 합니다. 각 섹션 제목 옆에 사용된 모델이 표시됩니다 (예: `· ✨ opus · 5m ago`).
 
-사용량을 더 줄이려면 `config.json`에서 `claude.model`을 `"sonnet"`으로 변경하세요.
+```json
+"claude": {
+  "modelPriority": ["opus", "sonnet"]
+}
+```
+
+Sonnet을 우선하려면 (저렴/빠름) 순서를 바꾸세요: `["sonnet", "opus"]`. 한 모델만 강제하려면 한 항목만: `["sonnet"]`.
+
+### 월간 토큰 예상치
+
+| 항목 | 주기 | 토큰 (Opus 기준) |
+|---|---|---|
+| Voice (한마디) | 매일 | ~45K |
+| Profile / Relationship / Philosophy | 매주 | ~28K |
+| Weekly summary | 매주 | ~5K |
+| Avatar decor / Accent color | 매주 | ~5K |
+| Project emojis (Sonnet, 새 프로젝트 시) | 드뭄 | <1K |
+| **합계** | | **~85K** |
+
+### 실제 비용
+
+- **Claude Code 구독 (Pro $20, Max $100):** 토큰이 플랜에 포함되어 **별도 과금 없음**. ~85K/월은 일반 채팅 1~2개 분량.
+- **API 직접 사용:** Opus 기준 약 $2~3/월, Sonnet 우선이면 더 저렴.
 
 <details>
 <summary><strong>트러블슈팅</strong></summary>

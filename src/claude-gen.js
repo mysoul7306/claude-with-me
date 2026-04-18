@@ -5,11 +5,27 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { config } from "./config.js";
 import { t, interpolate } from "./i18n.js";
+import cron from "node-cron";
 
 const execAsync = promisify(exec);
 
 const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
 const ONE_DAY = 24 * 60 * 60 * 1000;
+
+function getWeekRange() {
+  const weekDay = config.journey.weekStartDay ?? 1;
+  const today = new Date();
+  const diff = (today.getDay() - weekDay + 7) % 7;
+  const weekStart = new Date(today);
+  weekStart.setDate(today.getDate() - diff);
+  weekStart.setHours(0, 0, 0, 0);
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 6);
+  return {
+    startDate: weekStart.toISOString().split("T")[0],
+    endDate: weekEnd.toISOString().split("T")[0],
+  };
+}
 
 const CACHE_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'cache');
 
@@ -17,7 +33,7 @@ function cachePath(type) {
   return join(CACHE_DIR, `${type}.json`);
 }
 
-function readCache(type, ttlMs) {
+export function readCache(type, ttlMs) {
   try {
     const path = cachePath(type);
     const age = Date.now() - statSync(path).mtimeMs;
@@ -28,23 +44,60 @@ function readCache(type, ttlMs) {
   return null;
 }
 
-function writeCache(type, content) {
-  const data = { content, generatedAt: new Date().toISOString() };
+export function writeCache(type, content, generatedBy = null) {
+  const data = { content, generatedBy, generatedAt: new Date().toISOString() };
   try { writeFileSync(cachePath(type), JSON.stringify(data), "utf-8"); } catch { /* ok */ }
   return data;
 }
 
-async function callClaude(prompt) {
-  try {
-    const escaped = prompt.replace(/'/g, "'\\''");
-    const { stdout } = await execAsync(
-      `echo '${escaped}' | ${config.claude.cliPath} --print --model ${config.claude.model}`,
-      { encoding: "utf-8", timeout: 120000 }
-    );
-    const result = stdout.trim();
-    if (result.length > 10) return result;
-  } catch (err) {
-    console.warn("[claude-gen] CLI call failed:", err.message);
+// Errors that legitimately warrant fallback to the next model in priority.
+// Quality heuristics (short response, malformed JSON) do NOT trigger fallback —
+// returning null lets the caller decide.
+const FALLBACK_TRIGGERS = new Set(["rate_limit", "timeout", "unavailable"]);
+
+function classifyClaudeError(err) {
+  const msg = (err?.message ?? "").toLowerCase();
+  if (msg.includes("rate") || msg.includes("429")) return "rate_limit";
+  if (msg.includes("timeout") || msg.includes("etimedout")) return "timeout";
+  if (msg.includes("unavailable") || msg.includes("503") || msg.includes("overloaded")) return "unavailable";
+  return "other";
+}
+
+function sanitizeSurrogates(text) {
+  return text
+    .replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])/g, "")
+    .replace(/(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, "");
+}
+
+async function callClaudeWithModel(prompt, model) {
+  const escaped = prompt.replace(/'/g, "'\\''");
+  const { stdout } = await execAsync(
+    `echo '${escaped}' | ${config.claude.cliPath} --print --model ${model}`,
+    { encoding: "utf-8", timeout: 120000 }
+  );
+  const result = sanitizeSurrogates(stdout.trim());
+  return result.length > 10 ? result : null;
+}
+
+// Returns { content, generatedBy } on success, null on failure.
+// `opts.model` forces a single model (no fallback).
+async function callClaude(prompt, opts = {}) {
+  const models = opts.model
+    ? [opts.model]
+    : (config.claude.modelPriority ?? ["opus"]);
+
+  for (const model of models) {
+    try {
+      const content = await callClaudeWithModel(prompt, model);
+      if (content) return { content, generatedBy: model };
+      // Empty/short response: don't fallback (Codex: no quality heuristic fallback)
+      return null;
+    } catch (err) {
+      const reason = classifyClaudeError(err);
+      console.warn(`[claude-gen] ${model} failed (${reason}): ${err.message}`);
+      if (!FALLBACK_TRIGGERS.has(reason)) return null;
+      // Otherwise: try next model in priority
+    }
   }
   return null;
 }
@@ -55,10 +108,38 @@ function parseJson(raw) {
   } catch { return null; }
 }
 
-export function clearAllCaches() {
-  for (const type of ["profile", "relationship", "philosophy", "voice", "avatar-decor", "accent-color"]) {
+export function invalidateCaches(...types) {
+  for (const type of types) {
     try { unlinkSync(cachePath(type)); } catch { /* miss */ }
   }
+}
+
+const PROJECT_EMOJI_PROMPT = `Given these software project names, assign one emoji that represents each project's likely domain. Output JSON: {"projectName": "emoji", ...}. Only output the JSON object.`;
+
+export async function getProjectEmojis(projectNames) {
+  const cached = readCache("project-emojis", Infinity);
+  const existing = cached?.content || {};
+
+  const missing = projectNames.filter(
+    (n) => n && n !== "General" && !existing[n]
+  );
+  if (missing.length === 0) return existing;
+
+  // Project emojis: Sonnet only — trivial classification, no need for Opus.
+  const res = await callClaude(
+    `${PROJECT_EMOJI_PROMPT}\n\nProjects: ${missing.join(", ")}`,
+    { model: "sonnet" }
+  );
+  if (res?.content) {
+    const parsed = parseJson(res.content);
+    if (parsed && typeof parsed === "object") {
+      const merged = { ...existing, ...parsed };
+      writeCache("project-emojis", merged, res.generatedBy);
+      return merged;
+    }
+  }
+
+  return existing;
 }
 
 // --- Profile: "Through My Eyes" (7-day cache) ---
@@ -74,10 +155,10 @@ export async function getProfile(stats) {
     totalSessions: stats.totalSessions,
   });
 
-  const result = await callClaude(prompt);
-  if (result) {
-    const parsed = parseJson(result);
-    if (parsed) return { ...writeCache("profile", parsed), cached: false };
+  const res = await callClaude(prompt);
+  if (res?.content) {
+    const parsed = parseJson(res.content);
+    if (parsed) return { ...writeCache("profile", parsed, res.generatedBy), cached: false };
   }
 
   return { error: true, message: t.ui.errorCli };
@@ -93,10 +174,10 @@ export async function getRelationship(stats) {
     userName: config.userName,
   });
 
-  const result = await callClaude(prompt);
-  if (result) {
-    const parsed = parseJson(result);
-    if (parsed) return { ...writeCache("relationship", parsed), cached: false };
+  const res = await callClaude(prompt);
+  if (res?.content) {
+    const parsed = parseJson(res.content);
+    if (parsed) return { ...writeCache("relationship", parsed, res.generatedBy), cached: false };
   }
 
   return { error: true, message: t.ui.errorCli };
@@ -112,10 +193,10 @@ export async function getPhilosophy(stats) {
     userName: config.userName,
   });
 
-  const result = await callClaude(prompt);
-  if (result) {
-    const parsed = parseJson(result);
-    if (parsed) return { ...writeCache("philosophy", parsed), cached: false };
+  const res = await callClaude(prompt);
+  if (res?.content) {
+    const parsed = parseJson(res.content);
+    if (parsed) return { ...writeCache("philosophy", parsed, res.generatedBy), cached: false };
   }
 
   return { error: true, message: t.ui.errorCli };
@@ -134,9 +215,9 @@ export async function getVoice(stats) {
     totalObservations: stats.totalObservations,
   });
 
-  const result = await callClaude(prompt);
-  if (result) {
-    return { ...writeCache("voice", result), cached: false };
+  const res = await callClaude(prompt);
+  if (res?.content) {
+    return { ...writeCache("voice", res.content, res.generatedBy), cached: false };
   }
 
   return { error: true, message: t.ui.errorCli };
@@ -153,10 +234,10 @@ export async function getAvatarDecor() {
     role: config.role,
   });
 
-  const result = await callClaude(prompt);
-  if (result) {
-    const parsed = parseJson(result);
-    if (parsed) return { ...writeCache("avatar-decor", parsed), cached: false };
+  const res = await callClaude(prompt);
+  if (res?.content) {
+    const parsed = parseJson(res.content);
+    if (parsed) return { ...writeCache("avatar-decor", parsed, res.generatedBy), cached: false };
   }
   return { error: true, message: t.ui.errorAvatarDecor };
 }
@@ -174,10 +255,66 @@ export async function getAccentColor() {
     role: config.role,
   });
 
-  const result = await callClaude(prompt);
-  if (result) {
-    const parsed = parseJson(result);
-    if (parsed) return { ...writeCache("accent-color", parsed), cached: false };
+  const res = await callClaude(prompt);
+  if (res?.content) {
+    const parsed = parseJson(res.content);
+    if (parsed) return { ...writeCache("accent-color", parsed, res.generatedBy), cached: false };
   }
   return { accentColor: "#419BFF" };
+}
+
+// --- Weekly Summary: AI-generated week recap (7-day cache) ---
+
+export async function getWeeklySummary(history) {
+  const { startDate, endDate } = getWeekRange();
+  const thisWeek = history.filter((h) => h.date >= startDate);
+
+  if (thisWeek.length === 0) {
+    return { text: null, startDate, endDate };
+  }
+
+  const cached = readCache("weekly-summary", SEVEN_DAYS);
+  if (cached?.content) {
+    return { ...cached.content, generatedBy: cached.generatedBy, generatedAt: cached.generatedAt };
+  }
+
+  const serialized = thisWeek
+    .map((h) => `${h.project}: ${h.title} (${h.description})`)
+    .join("\n");
+
+  const prompt =
+    interpolate(t.prompts.weeklySummary, { startDate, endDate }) +
+    "\n" +
+    serialized;
+
+  const res = await callClaude(prompt);
+  if (res?.content) {
+    const payload = { text: res.content, startDate, endDate };
+    const written = writeCache("weekly-summary", payload, res.generatedBy);
+    return { ...payload, generatedBy: res.generatedBy, generatedAt: written.generatedAt };
+  }
+
+  return { text: null, startDate, endDate };
+}
+
+export function scheduleRefreshCycles(refreshJourney) {
+  const intervalMin = config.journey.refreshIntervalMin ?? 60;
+  const weekDay = config.journey.weekStartDay ?? 1;
+
+  cron.schedule(`*/${intervalMin} * * * *`, () => {
+    console.log(`[${new Date().toISOString()}] Cron: journey refresh`);
+    refreshJourney();
+  });
+
+  cron.schedule("0 0 * * *", () => {
+    console.log(`[${new Date().toISOString()}] Cron: daily voice refresh`);
+    invalidateCaches("voice");
+  });
+
+  cron.schedule(`0 0 * * ${weekDay}`, () => {
+    console.log(`[${new Date().toISOString()}] Cron: weekly refresh`);
+    invalidateCaches("profile", "relationship", "philosophy", "avatar-decor", "accent-color", "weekly-summary");
+  });
+
+  console.log(`  Cron: journey every ${intervalMin}m, voice daily, weekly on day ${weekDay}`);
 }

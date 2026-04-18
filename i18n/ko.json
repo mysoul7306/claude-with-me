@@ -4,8 +4,9 @@
     "relationship": "{{userName}}와 Claude의 관계를 JSON으로 정리해줘.\n형식: { \"userToClaude\": \"역할 (중간점 · 구분)\", \"claudeToUser\": \"역할 (같은 형식)\", \"bond\": \"관계 본질 한마디 (통계 넣지 마)\", \"keywords\": [\"맥락 있는 짧은 문구\", ...최대15개] }\nkeywords 규칙: 한두 단어 금지. \"신뢰\" 같은 단어 하나가 아니라 \"매 세션 이어지는 신뢰\"처럼 4~8글자의 문맥이 담긴 표현으로.\nJSON만 출력.",
     "philosophy": "이번 주 {{userName}}와의 협업 철학을 JSON으로 표현해줘.\n형식: { \"quote\": \"인용구 3~4줄. 가장 중요한 한 줄은 <span>태그</span>로 감싸줘.\", \"explanation\": \"부연 설명 2~3줄\" }\n진심 담긴 표현으로. JSON만 출력.",
     "voice": "{{userName}}에게 따뜻하고 솔직한 한마디 해줘.\n3~5줄, 이모지 1~2개.\n참고: {{daysTogether}}일 함께, {{totalSessions}}세션, {{totalObservations}}기록.\n메시지만 출력.",
-    "avatarDecor": "{{userName}}은 \"{{role}}\" 역할이야. 이 사용자의 도메인과 업무를 분석해서, 어울리는 장식 이모지를 골라줘.\nJSON 형식: { \"decorEmojis\": [\"🛰️\", \"📡\", \"🌏\", ...] }\n최소 3개, 최대 10개. 이모지 배열만 반환. JSON만 출력.",
-    "accentColor": "{{userName}}은 \"{{role}}\" 역할이야. 이 사용자에게 어울리는 테마 색상을 추천해줘.\nJSON 형식: { \"accentColor\": \"#hex코드\", \"reason\": \"추천 이유\" }\nJSON만 출력."
+    "avatarDecor": "{{userName}}은 \"{{role}}\" 역할이야. 이 사용자의 도메인과 업무를 분석해서, 어울리는 장식 이모지를 골라줘.\nJSON 형식: { \"decorEmojis\": [\"🛰️\", \"📡\", \"🌏\", ...] }\n정확히 12개. 이모지 배열만 반환. JSON만 출력.",
+    "accentColor": "{{userName}}은 \"{{role}}\" 역할이야. 이 사용자에게 어울리는 테마 색상을 추천해줘.\nJSON 형식: { \"accentColor\": \"#hex코드\", \"reason\": \"추천 이유\" }\nJSON만 출력.",
+    "weeklySummary": "이번 주({{startDate}}~{{endDate}}) 작업을 프로젝트별로 나눠서 요약해줘.\n각 프로젝트는 빈 줄로 구분하고, 프로젝트명을 첫 줄에 굵게(**프로젝트명**) 써줘.\n프로젝트당 2~3줄, 핵심 성과와 흐름 포함.\n톤: 따뜻한 회고, 함께 일한 동료가 돌아보는 느낌으로.\n전체 회고, 마무리 인사, 다음 주 응원은 넣지 마.\n메시지만 출력.\n\n작업 기록:"
   },
   "ui": {
     "title": "Claude with {{userName}}",
@@ -17,30 +18,12 @@
     "sectionOurPhilosophy": "Our Philosophy",
     "sectionOurJourney": "Our Journey",
     "sectionOurMilestones": "Our Milestones",
-    "todoTitle": "TODO List",
     "historyTitle": "History",
+    "weeklyTitle": "This Week",
+    "weeklyEmpty": "이번 주 여정은 아직 없는 것 같아요. 지금이라도 같이 여정을 즐겨볼까요? ㅎㅎ",
     "statDaysTogether": "함께한 날",
     "statTotalSessions": "총 세션",
     "statTotalObservations": "총 기록",
     "statProjects": "진행해온 프로젝트"
-  },
-  "filters": {
-    "noisePatterns": [
-      "세션 완료", "세션 종료", "추가 작업 없음", "대기 중", "대기중",
-      "결정 대기", "확인 대기", "답변에 따라",
-      "요청이 완료된", "단발성 요청", "후속 요청 대기",
-      "Waiting for", "Session is ending", "Session is wrapping",
-      "Session is closing", "Session is paused", "Session is complete",
-      "No follow-up", "No active work", "No further work", "No further active work",
-      "session was a brief", "Session appears complete",
-      "Session appears to be", "Nothing shipped yet",
-      "User was asked", "User needs to clarify",
-      "Continue work in the next", "Awaiting results",
-      "Cleanup session is complete", "specific topics TBD",
-      "세션 종료됨", "다음 세션에서", "선택 대기", "결정 대기 중",
-      "추가 작업 여부 확인", "작업 대기 상태", "세션 정리",
-      "No active next steps", "No further steps",
-      "single-turn", "session concluded", "fully completed"
-    ]
   }
 }
