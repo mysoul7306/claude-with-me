@@ -84,7 +84,7 @@ Open `config.json` to customize:
 | `accentColor` | Theme color (hex). Claude suggests one if omitted | `"#419BFF"` |
 | `journey.historyLimit` | History entries to display | `20` |
 | `journey.excludedProjectNames` | Project names filtered as noise | `["Workspaces", "Workspace", "observer-sessions"]` |
-| `journey.weekStartDay` | Day of week for weekly cache refresh (0=Sun, 1=Mon) | `1` |
+| `journey.weekStartDay` | Day of week for weekly refresh — profile, relationship, philosophy, and weekly summary (0=Sun, 1=Mon) | `1` |
 | `journey.refreshIntervalMin` | History refresh interval in minutes | `60` |
 | `claude.modelPriority` | Models tried in order; fallback only on operational failure | `["opus", "sonnet"]` |
 | `claude.cliPath` | Path to Claude CLI | `"claude"` |
@@ -159,7 +159,7 @@ claude-mem DB ──> Express API ──> Claude CLI ──> Dashboard
 
 1. **claude-mem** records Claude Code sessions into a SQLite DB
 2. **Server** reads the DB for stats and history
-3. **Claude CLI** dynamically generates profile, relationship, and philosophy (cached)
+3. **Claude CLI** dynamically generates profile, relationship, philosophy, and weekly summary (cached)
 4. **Dashboard** visualizes everything in a single page
 
 The launcher automatically detects your Node.js runtime (mise, nvm, or system), so upgrading Node.js requires no reinstallation.
@@ -186,13 +186,14 @@ To prefer Sonnet (cheaper, faster), reorder: `["sonnet", "opus"]`. To force a si
 |---|---|---|
 | Voice message | Daily | ~45K |
 | Profile / Relationship / Philosophy | Weekly | ~28K |
+| Weekly summary | Weekly | ~5K |
 | Avatar decor / Accent color | Weekly | ~5K |
 | Project emojis (Sonnet, on new project) | Rare | <1K |
-| **Total** | | **~80K** |
+| **Total** | | **~85K** |
 
 ### Cost in Practice
 
-- **Claude Code subscription (Pro $20, Max $100):** Tokens are included in your plan — **no separate charges**. ~80K/month is roughly 1–2 typical chat sessions worth of usage.
+- **Claude Code subscription (Pro $20, Max $100):** Tokens are included in your plan — **no separate charges**. ~85K/month is roughly 1–2 typical chat sessions worth of usage.
 - **Direct API:** Roughly $2–3/month at Opus prices, less if Sonnet-first.
 
 <details>

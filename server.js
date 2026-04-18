@@ -6,7 +6,7 @@ import { t, interpolate } from "./src/i18n.js";
 import { getStats, getJourneyHistory, getLatestSummaryEpoch } from "./src/db.js";
 import {
   getProfile, getRelationship, getPhilosophy, getVoice,
-  getAvatarDecor, getAccentColor,
+  getAvatarDecor, getAccentColor, getWeeklySummary,
   getProjectEmojis, scheduleRefreshCycles,
   readCache, writeCache,
 } from "./src/claude-gen.js";
@@ -34,12 +34,16 @@ app.get("/api/config", async (_req, res) => {
 app.get("/api/stats", (_req, res) => res.json(getStats()));
 
 app.get("/api/journey", async (_req, res) => {
+  let journeyData;
   const cached = readCache("journey", JOURNEY_TTL);
   if (cached?.content) {
-    return res.json({ ...cached.content, generatedAt: cached.generatedAt });
+    journeyData = { ...cached.content, generatedAt: cached.generatedAt };
+  } else {
+    journeyData = await buildJourney();
   }
-  const result = await buildJourney();
-  res.json(result);
+
+  const weeklySummary = await getWeeklySummary(journeyData.history || []);
+  res.json({ ...journeyData, weeklySummary });
 });
 
 app.get("/api/profile", async (_req, res) => res.json(await getProfile(getStats())));

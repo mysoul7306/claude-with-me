@@ -291,6 +291,8 @@
     flex-direction: column;
     align-items: center;
     gap: 8px;
+    flex: 1;
+    min-width: 0;
   }
 
   .connection-line {
@@ -310,7 +312,7 @@
     font-size: 0.75rem;
     color: var(--text-dim);
     text-align: center;
-    max-width: 180px;
+    max-width: 100%;
     line-height: 1.6;
     margin-top: 4px;
   }
@@ -609,14 +611,14 @@
   .avatar-decor.inner {
     top: var(--decor-top);
     left: var(--decor-left);
-    opacity: 0.75;
+    opacity: 1;
     animation: float-decor var(--float-duration, 4s) ease-in-out infinite;
     animation-delay: var(--float-delay, 0s);
   }
   .avatar-decor.outer {
     top: calc(50% - var(--decor-font) / 2);
     left: calc(50% - var(--decor-font) / 2);
-    opacity: 0.65;
+    opacity: 1;
     animation: orbit-decor var(--orbit-duration, 20s) linear infinite;
     animation-delay: var(--orbit-delay, 0s);
   }
@@ -653,9 +655,20 @@
     .trait:nth-child(4) { border-top-color: var(--accent-orange); }
     .trait:nth-child(5) { border-top-color: var(--accent-pink); }
     .relationship-visual { flex-direction: column; }
-    .connection { transform: rotate(90deg); }
+    .connection-line .arrow { display: inline-block; transform: rotate(90deg); }
     .philosophy-banner { padding: 28px; }
     .philosophy-banner .big-quote { font-size: 1.4rem; }
+  }
+  @media (max-width: 480px) {
+    .footer-journey {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .sig-sep {
+      display: block;
+      font-size: 0;
+      height: 4px;
+    }
   }
 </style>
 </head>
@@ -694,7 +707,7 @@
 
     <div class="relationship-visual">
       <div class="entity-bubble claude">
-        <span class="emoji">🤖</span>
+        <span class="emoji">✦</span>
         Claude
       </div>
       <div class="connection">
@@ -736,7 +749,7 @@
   <div class="footer">
     <div class="footer-journey" id="footer-journey"></div>
     <p id="footer-voice">loading...</p>
-    <div class="sig" id="footer-sig">claude-with-me by <a href="https://github.com/mysoul7306" target="_blank" style="color:#419BFF;text-decoration:none;">rok_root</a> · Data powered by <a href="https://github.com/thedotmack" target="_blank" style="color:#f59e0b;text-decoration:none;">claude-mem</a></div>
+    <div class="sig" id="footer-sig">claude-with-me by <a href="https://github.com/mysoul7306" target="_blank" style="color:#419BFF;text-decoration:none;">rok_root</a> <span class="sig-sep">·</span> Data powered by <a href="https://github.com/thedotmack" target="_blank" style="color:#f59e0b;text-decoration:none;">claude-mem</a></div>
   </div>
 
 </div>
@@ -938,11 +951,10 @@ async function load() {
       if (subtitleEl && bondText) subtitleEl.textContent = bondText.replace(/\n/g, ' — ');
 
       const kwColors = ['orange','blue','cyan','green','pink','purple'];
-      const shuffled = [...kwColors].sort(() => Math.random() - 0.5);
       const kwLimit = window.innerWidth <= 480 ? 8 : 15;
       document.getElementById('keywords').innerHTML =
-        (rel.keywords || []).slice(0, kwLimit).map((kw, i) =>
-          `<span class="keyword ${shuffled[i % shuffled.length]}">${kw}</span>`
+        (rel.keywords || []).slice(0, kwLimit).map((kw) =>
+          `<span class="keyword ${kwColors[Math.floor(Math.random() * kwColors.length)]}">${kw}</span>`
         ).join('');
     }
 
@@ -1029,6 +1041,44 @@ function renderJourney(journey) {
     refactor:  { emoji: '🔄', color: '#a855f7' },
   };
 
+  const timelineEl = document.getElementById('journey-timeline');
+  let html = '';
+
+  // Weekly Summary card
+  const ws = journey.weeklySummary;
+  if (ws) {
+    const dateFmt = new Intl.DateTimeFormat(navigator.language, { month: 'short', day: 'numeric' });
+    const rangeStart = dateFmt.format(new Date(ws.startDate + 'T00:00:00'));
+    const rangeEnd = dateFmt.format(new Date(ws.endDate + 'T00:00:00'));
+    const weeklyTitle = appConfig.ui?.weeklyTitle || 'This Week';
+
+    if (ws.text) {
+      const modelBadge = ws.generatedBy
+        ? `<span style="display:inline-block;padding:2px 8px;background:color-mix(in srgb, var(--accent-user) 10%, transparent);color:var(--accent-user);border-radius:10px;font-size:0.65rem;">✨ ${ws.generatedBy}</span>`
+        : '';
+      const projEmojiMap = {};
+      (journey.history || []).forEach(h => { if (h.projectEmoji && h.project) projEmojiMap[h.project] = h.projectEmoji; });
+      const weeklyBody = ws.text
+        .replace(/^---\n*/gm, '')
+        .replace(/\*\*(.+?)\*\*\n*/g, (_, name) => {
+          const emoji = projEmojiMap[name] || '📋';
+          return `<div style="margin-top:14px;margin-bottom:4px;"><span style="display:inline-block;padding:2px 10px;background:color-mix(in srgb, var(--accent-user) 12%, transparent);color:var(--accent-user);border-radius:10px;font-size:0.75rem;font-weight:600;">${emoji} ${name}</span></div>`;
+        });
+      html += `<div style="margin-bottom:28px;padding:20px;background:color-mix(in srgb, var(--accent-user) 5%, var(--card-bg));border:1px solid color-mix(in srgb, var(--accent-user) 20%, transparent);border-radius:12px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <h3 style="color:var(--accent-user);font-size:1.1rem;margin:0;">📅 ${weeklyTitle} (${rangeStart} – ${rangeEnd})</h3>
+          ${modelBadge}
+        </div>
+        <div style="color:#cbd5e1;font-size:0.9rem;line-height:1.7;white-space:pre-line;">${weeklyBody}</div>
+      </div>`;
+    } else {
+      html += `<div style="margin-bottom:28px;padding:20px;background:color-mix(in srgb, var(--accent-user) 3%, var(--card-bg));border:1px dashed color-mix(in srgb, var(--accent-user) 15%, transparent);border-radius:12px;text-align:center;">
+        <h3 style="color:var(--accent-user);font-size:1.1rem;margin:0 0 8px 0;">📅 ${weeklyTitle} (${rangeStart} – ${rangeEnd})</h3>
+        <div style="color:#64748b;font-size:0.85rem;">${appConfig.ui?.weeklyEmpty || 'No journeys this week yet.'}</div>
+      </div>`;
+    }
+  }
+
   // History - grouped by date
   if (journey.history && journey.history.length > 0) {
     const grouped = {};
@@ -1036,7 +1086,7 @@ function renderJourney(journey) {
       if (!grouped[t.date]) grouped[t.date] = [];
       grouped[t.date].push(t);
     }
-    document.getElementById('journey-timeline').innerHTML =
+    html +=
       `<h3 style="color:var(--accent-cyan);font-size:1.2rem;margin-bottom:16px;">📜 ${appConfig.ui?.historyTitle || 'History'}</h3>` +
       Object.entries(grouped).map(([date, items]) =>
         `<div style="margin-bottom:24px;">
@@ -1062,9 +1112,9 @@ function renderJourney(journey) {
           }).join('')}
         </div>`
       ).join('');
-  } else {
-    document.getElementById('journey-timeline').innerHTML = '';
   }
+
+  timelineEl.innerHTML = html;
 }
 
 async function pollJourney() {
@@ -1092,8 +1142,12 @@ function updateClock() {
   const s = String(now.getSeconds()).padStart(2, '0');
   document.getElementById('header-clock').textContent = `${h}:${m}:${s}`;
 }
-updateClock();
-setInterval(updateClock, 1000);
+if (new URLSearchParams(location.search).has('screenshot')) {
+  document.getElementById('header-clock').textContent = '00:00:00';
+} else {
+  updateClock();
+  setInterval(updateClock, 1000);
+}
 </script>
 
 </body>
