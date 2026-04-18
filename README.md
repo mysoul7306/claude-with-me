@@ -19,7 +19,7 @@ This project was built entirely with [Claude Code](https://claude.ai/code).
 
 ## Quick Start
 
-**Requirements:** Node.js 20+, [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code), [claude-mem](https://github.com/thedotmack) plugin (used at least once)
+**Requirements:** Node.js 20+, [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) signed in with a **Claude Pro/Max subscription or Anthropic API key** (free tier not sufficient), [claude-mem](https://github.com/thedotmack) plugin (used at least once)
 
 ```bash
 git clone https://github.com/mysoul7306/claude-with-me.git
