@@ -23,7 +23,7 @@ claude-mem DB ──> Express API ──> Claude CLI ──> Dashboard
 server.js              # Express server, API routes, midnight cache refresh
 src/
   config.js            # Loads config.json with defaults
-  db.js                # Reads claude-mem SQLite DB (stats, journey, TODO)
+  db.js                # Reads claude-mem SQLite DB (stats, journey history)
   claude-gen.js        # Claude CLI calls for profile/relationship/philosophy/voice + caching
   hooks-patcher.js     # Auto-patches claude-mem hooks (disableReadCache, excludedProjects)
   i18n.js              # i18n support (en/ko)
@@ -51,8 +51,8 @@ npm start              # node server.js (production)
 Key settings:
 - `userName`, `role`, `avatar` — Dashboard display info
 - `accentColor` — User accent color applied to avatar, role label, journey line
-- `journey.todoTtlDays` — Auto-expire TODOs older than N days (default 14)
-- `claude.model` — AI generation model (`opus` / `sonnet`)
+- `language` — Dashboard language (`en` / `ko`)
+- `claude.modelPriority` — Models tried in order; fallback only on operational failure (`["opus", "sonnet"]`)
 - `claudeMem.disableReadCache` — Disable file-read caching hook
 - `claudeMem.excludedProjects` — Paths to exclude from tracking
 
