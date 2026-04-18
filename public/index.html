@@ -137,6 +137,16 @@
     align-items: center;
     gap: 12px;
   }
+  .section-meta {
+    font-size: 0.7rem;
+    font-weight: 400;
+    color: #64748b;
+    opacity: 0.75;
+    letter-spacing: 0.02em;
+  }
+  .section-meta .meta-model {
+    color: #94a3b8;
+  }
 
   .section-title .icon {
     font-size: 1.8rem;
@@ -281,6 +291,8 @@
     flex-direction: column;
     align-items: center;
     gap: 8px;
+    flex: 1;
+    min-width: 0;
   }
 
   .connection-line {
@@ -300,7 +312,7 @@
     font-size: 0.75rem;
     color: var(--text-dim);
     text-align: center;
-    max-width: 180px;
+    max-width: 100%;
     line-height: 1.6;
     margin-top: 4px;
   }
@@ -517,7 +529,7 @@
     display: flex;
     align-items: center;
     gap: 0;
-    min-width: max-content;
+    width: 100%;
   }
 
   .footer-journey .journey-node {
@@ -526,6 +538,7 @@
     align-items: center;
     gap: 4px;
     flex-shrink: 0;
+    width: 48px;
   }
 
   .footer-journey .journey-node .node-emoji {
@@ -541,10 +554,9 @@
   }
 
   .footer-journey .journey-line {
-    width: 130px;
+    flex: 1;
     height: 2px;
     background: linear-gradient(90deg, var(--accent-blue), var(--accent-user));
-    flex-shrink: 0;
     position: relative;
     opacity: 0.5;
   }
@@ -599,14 +611,14 @@
   .avatar-decor.inner {
     top: var(--decor-top);
     left: var(--decor-left);
-    opacity: 0.75;
+    opacity: 1;
     animation: float-decor var(--float-duration, 4s) ease-in-out infinite;
     animation-delay: var(--float-delay, 0s);
   }
   .avatar-decor.outer {
     top: calc(50% - var(--decor-font) / 2);
     left: calc(50% - var(--decor-font) / 2);
-    opacity: 0.65;
+    opacity: 1;
     animation: orbit-decor var(--orbit-duration, 20s) linear infinite;
     animation-delay: var(--orbit-delay, 0s);
   }
@@ -620,6 +632,8 @@
     from { transform: rotate(var(--orbit-start, 0deg)) translateX(var(--orbit-radius, 100px)) rotate(calc(-1 * var(--orbit-start, 0deg))); }
     to { transform: rotate(calc(var(--orbit-start, 0deg) + 360deg)) translateX(var(--orbit-radius, 100px)) rotate(calc(-1 * (var(--orbit-start, 0deg) + 360deg))); }
   }
+
+
 
   /* ===== ERROR MESSAGE ===== */
   .error-message {
@@ -641,9 +655,20 @@
     .trait:nth-child(4) { border-top-color: var(--accent-orange); }
     .trait:nth-child(5) { border-top-color: var(--accent-pink); }
     .relationship-visual { flex-direction: column; }
-    .connection { transform: rotate(90deg); }
+    .connection-line .arrow { display: inline-block; transform: rotate(90deg); }
     .philosophy-banner { padding: 28px; }
     .philosophy-banner .big-quote { font-size: 1.4rem; }
+  }
+  @media (max-width: 480px) {
+    .footer-journey {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .sig-sep {
+      display: block;
+      font-size: 0;
+      height: 4px;
+    }
   }
 </style>
 </head>
@@ -661,7 +686,7 @@
 
   <!-- WHO IS ROK -->
   <div class="profile-section">
-    <div class="section-title" id="section-through-my-eyes"><span class="icon">👤</span> Through My Eyes</div>
+    <div class="section-title" id="section-through-my-eyes"><span class="icon">👤</span> Through My Eyes <span class="section-meta" id="profile-meta"></span></div>
     <div class="profile-card">
       <div class="avatar-area">
         <div class="avatar-orbit" id="avatar-orbit">
@@ -678,11 +703,11 @@
 
   <!-- RELATIONSHIP -->
   <div class="relationship-section">
-    <div class="section-title" id="section-claude-with-me"><span class="icon">🔗</span> Claude With Me</div>
+    <div class="section-title" id="section-claude-with-me"><span class="icon">🔗</span> Claude With Me <span class="section-meta" id="relationship-meta"></span></div>
 
     <div class="relationship-visual">
       <div class="entity-bubble claude">
-        <span class="emoji">🤖</span>
+        <span class="emoji">✦</span>
         Claude
       </div>
       <div class="connection">
@@ -701,7 +726,7 @@
 
   <!-- PHILOSOPHY -->
   <div class="philosophy-section">
-    <div class="section-title" id="section-our-philosophy"><span class="icon">💡</span> Our Philosophy</div>
+    <div class="section-title" id="section-our-philosophy"><span class="icon">💡</span> Our Philosophy <span class="section-meta" id="philosophy-meta"></span></div>
     <div class="philosophy-banner">
       <div class="big-quote" id="phil-quote">loading...</div>
       <div class="explanation" id="phil-explanation"></div>
@@ -710,8 +735,7 @@
 
   <!-- JOURNEY TIMELINE -->
   <div class="timeline-section">
-    <div class="section-title" id="section-our-journey"><span class="icon">📅</span> Our Journey</div>
-    <div id="upcoming" style="margin-bottom:32px;">loading...</div>
+    <div class="section-title" id="section-our-journey"><span class="icon">📅</span> Our Journey <span class="section-meta" id="journey-meta"></span></div>
     <div id="journey-timeline" class="timeline">loading...</div>
   </div>
 
@@ -725,7 +749,7 @@
   <div class="footer">
     <div class="footer-journey" id="footer-journey"></div>
     <p id="footer-voice">loading...</p>
-    <div class="sig" id="footer-sig">claude-with-me by <a href="https://github.com/mysoul7306" target="_blank" style="color:#419BFF;text-decoration:none;">rok_root</a> · Data powered by <a href="https://github.com/thedotmack" target="_blank" style="color:#f59e0b;text-decoration:none;">claude-mem</a></div>
+    <div class="sig" id="footer-sig">claude-with-me by <a href="https://github.com/mysoul7306" target="_blank" style="color:#419BFF;text-decoration:none;">rok_root</a> <span class="sig-sep">·</span> Data powered by <a href="https://github.com/thedotmack" target="_blank" style="color:#f59e0b;text-decoration:none;">claude-mem</a></div>
   </div>
 
 </div>
@@ -856,6 +880,29 @@ function renderSection(elementId, data, renderFn) {
   renderFn(el, data);
 }
 
+function timeAgo(isoString) {
+  if (!isoString) return '';
+  const diff = Date.now() - new Date(isoString).getTime();
+  if (diff < 0) return 'just now';
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return 'just now';
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const days = Math.floor(hr / 24);
+  return `${days}d ago`;
+}
+
+function setSectionMeta(metaId, data) {
+  const el = document.getElementById(metaId);
+  if (!el) return;
+  if (!data || data.error) { el.textContent = ''; return; }
+  const parts = [];
+  if (data.generatedBy) parts.push(`<span class="meta-model">✨ ${data.generatedBy}</span>`);
+  if (data.generatedAt) parts.push(timeAgo(data.generatedAt));
+  el.innerHTML = parts.length ? `· ${parts.join(' · ')}` : '';
+}
+
 async function load() {
   try {
     const [stats, journey, profile, relationship, philosophy, voice] = await Promise.all([
@@ -903,15 +950,20 @@ async function load() {
       const subtitleEl = document.getElementById('subtitle');
       if (subtitleEl && bondText) subtitleEl.textContent = bondText.replace(/\n/g, ' — ');
 
-      const kwColors = ['orange','blue','cyan','green','pink'];
+      const kwColors = ['orange','blue','cyan','green','pink','purple'];
       const kwLimit = window.innerWidth <= 480 ? 8 : 15;
       document.getElementById('keywords').innerHTML =
-        (rel.keywords || []).slice(0, kwLimit).map((kw, i) =>
-          `<span class="keyword ${kwColors[i % kwColors.length]}">${kw}</span>`
+        (rel.keywords || []).slice(0, kwLimit).map((kw) =>
+          `<span class="keyword ${kwColors[Math.floor(Math.random() * kwColors.length)]}">${kw}</span>`
         ).join('');
     }
 
     renderJourney(journey);
+    // Section meta (AI model + last refreshed)
+    setSectionMeta('profile-meta', profile);
+    setSectionMeta('relationship-meta', relationship);
+    setSectionMeta('philosophy-meta', philosophy);
+    setSectionMeta('journey-meta', journey);
 
     // Philosophy
     if (!philosophy.error) {
@@ -979,17 +1031,52 @@ async function load() {
 }
 
 function renderJourney(journey) {
-  // TODO List
-  if (journey.todo && journey.todo.length > 0) {
-    document.getElementById('upcoming').innerHTML =
-      `<h3 style="color:#f59e0b;font-size:1.2rem;margin-bottom:16px;">📋 ${appConfig.ui?.todoTitle || 'TODO List'}</h3>` +
-      journey.todo.map(t => {
-        const badge = t.project ? `<span style="display:inline-block;padding:1px 8px;background:rgba(245,158,11,0.1);color:#f59e0b;border-radius:10px;font-size:0.7rem;margin-left:6px;">${t.project}</span>` : '';
-        const dateBadge = t.date && t.date !== 'unknown' ? `<span style="display:inline-block;padding:1px 8px;background:rgba(100,116,139,0.1);color:#64748b;border-radius:10px;font-size:0.65rem;margin-left:6px;">${t.date}</span>` : '';
-        return `<div style="padding:10px 14px;margin-bottom:8px;background:#111827;border:1px solid #1e293b;border-left:3px solid #f59e0b;border-radius:8px;font-size:0.88rem;color:#94a3b8;line-height:1.6;">${t.text} ${badge}${dateBadge}</div>`;
-      }).join('');
-  } else {
-    document.getElementById('upcoming').innerHTML = '';
+  // Observations type badge config
+  const TYPE_BADGES = {
+    bugfix:    { emoji: '🐛', color: '#ef4444' },
+    feature:   { emoji: '🟣', color: '#f59e0b' },
+    change:    { emoji: '✅', color: '#22c55e' },
+    discovery: { emoji: '🔵', color: '#3b82f6' },
+    decision:  { emoji: '⚖️', color: '#06b6d4' },
+    refactor:  { emoji: '🔄', color: '#a855f7' },
+  };
+
+  const timelineEl = document.getElementById('journey-timeline');
+  let html = '';
+
+  // Weekly Summary card
+  const ws = journey.weeklySummary;
+  if (ws) {
+    const dateFmt = new Intl.DateTimeFormat(navigator.language, { month: 'short', day: 'numeric' });
+    const rangeStart = dateFmt.format(new Date(ws.startDate + 'T00:00:00'));
+    const rangeEnd = dateFmt.format(new Date(ws.endDate + 'T00:00:00'));
+    const weeklyTitle = appConfig.ui?.weeklyTitle || 'This Week';
+
+    if (ws.text) {
+      const modelBadge = ws.generatedBy
+        ? `<span style="display:inline-block;padding:2px 8px;background:color-mix(in srgb, var(--accent-user) 10%, transparent);color:var(--accent-user);border-radius:10px;font-size:0.65rem;">✨ ${ws.generatedBy}</span>`
+        : '';
+      const projEmojiMap = {};
+      (journey.history || []).forEach(h => { if (h.projectEmoji && h.project) projEmojiMap[h.project] = h.projectEmoji; });
+      const weeklyBody = ws.text
+        .replace(/^---\n*/gm, '')
+        .replace(/\*\*(.+?)\*\*\n*/g, (_, name) => {
+          const emoji = projEmojiMap[name] || '📋';
+          return `<div style="margin-top:14px;margin-bottom:4px;"><span style="display:inline-block;padding:2px 10px;background:color-mix(in srgb, var(--accent-user) 12%, transparent);color:var(--accent-user);border-radius:10px;font-size:0.75rem;font-weight:600;">${emoji} ${name}</span></div>`;
+        });
+      html += `<div style="margin-bottom:28px;padding:20px;background:color-mix(in srgb, var(--accent-user) 5%, var(--card-bg));border:1px solid color-mix(in srgb, var(--accent-user) 20%, transparent);border-radius:12px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <h3 style="color:var(--accent-user);font-size:1.1rem;margin:0;">📅 ${weeklyTitle} (${rangeStart} – ${rangeEnd})</h3>
+          ${modelBadge}
+        </div>
+        <div style="color:#cbd5e1;font-size:0.9rem;line-height:1.7;white-space:pre-line;">${weeklyBody}</div>
+      </div>`;
+    } else {
+      html += `<div style="margin-bottom:28px;padding:20px;background:color-mix(in srgb, var(--accent-user) 3%, var(--card-bg));border:1px dashed color-mix(in srgb, var(--accent-user) 15%, transparent);border-radius:12px;text-align:center;">
+        <h3 style="color:var(--accent-user);font-size:1.1rem;margin:0 0 8px 0;">📅 ${weeklyTitle} (${rangeStart} – ${rangeEnd})</h3>
+        <div style="color:#64748b;font-size:0.85rem;">${appConfig.ui?.weeklyEmpty || 'No journeys this week yet.'}</div>
+      </div>`;
+    }
   }
 
   // History - grouped by date
@@ -999,29 +1086,42 @@ function renderJourney(journey) {
       if (!grouped[t.date]) grouped[t.date] = [];
       grouped[t.date].push(t);
     }
-    document.getElementById('journey-timeline').innerHTML =
+    html +=
       `<h3 style="color:var(--accent-cyan);font-size:1.2rem;margin-bottom:16px;">📜 ${appConfig.ui?.historyTitle || 'History'}</h3>` +
       Object.entries(grouped).map(([date, items]) =>
         `<div style="margin-bottom:24px;">
           <div style="font-family:'JetBrains Mono',monospace;font-size:0.9rem;color:#f8fafc;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--card-border);">${date}</div>
-          ${items.map(t =>
-            `<div class="timeline-item">
-              <div class="tl-date"><span style="display:inline-block;padding:1px 8px;background:color-mix(in srgb, var(--accent-user) 10%, transparent);color:var(--accent-user);border-radius:10px;font-size:0.7rem;">${t.project}</span></div>
+          ${items.map(t => {
+            const projLabel = t.projectEmoji ? `${t.projectEmoji} ${t.project}` : t.project;
+            const typeBadges = (t.types || [])
+              .map(type => {
+                const badge = TYPE_BADGES[type];
+                if (!badge) return '';
+                return `<span style="display:inline-block;padding:2px 8px;background:${badge.color}15;color:${badge.color};border-radius:12px;font-size:0.65rem;">${badge.emoji} ${type}</span>`;
+              })
+              .filter(Boolean)
+              .join(' ');
+            return `<div class="timeline-item">
+              <div class="tl-date" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                <span style="display:inline-block;padding:1px 8px;background:color-mix(in srgb, var(--accent-user) 10%, transparent);color:var(--accent-user);border-radius:10px;font-size:0.7rem;">${projLabel}</span>
+                ${typeBadges}
+              </div>
               <div class="tl-title">${t.title}</div>
               <div class="tl-desc">${t.description}</div>
-            </div>`
-          ).join('')}
+            </div>`;
+          }).join('')}
         </div>`
       ).join('');
-  } else {
-    document.getElementById('journey-timeline').innerHTML = '';
   }
+
+  timelineEl.innerHTML = html;
 }
 
 async function pollJourney() {
   try {
     const journey = await fetch('/api/journey').then(r => r.json());
     renderJourney(journey);
+    setSectionMeta('journey-meta', journey);
   } catch (err) {
     console.warn('Journey poll failed:', err);
   }
@@ -1042,8 +1142,12 @@ function updateClock() {
   const s = String(now.getSeconds()).padStart(2, '0');
   document.getElementById('header-clock').textContent = `${h}:${m}:${s}`;
 }
-updateClock();
-setInterval(updateClock, 1000);
+if (new URLSearchParams(location.search).has('screenshot')) {
+  document.getElementById('header-clock').textContent = '00:00:00';
+} else {
+  updateClock();
+  setInterval(updateClock, 1000);
+}
 </script>
 
 </body>

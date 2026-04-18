@@ -15,7 +15,8 @@
   "author": "rok_root <mysoul7306@outlook.com>",
   "license": "Apache-2.0",
   "dependencies": {
+    "better-sqlite3": "^11.9.1",
     "express": "^5.1.0",
-    "better-sqlite3": "^11.9.1"
+    "node-cron": "^4.2.1"
   }
 }
