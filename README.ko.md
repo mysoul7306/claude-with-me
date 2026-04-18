@@ -19,7 +19,7 @@ Claude를 단순 도구가 아닌 동료로 바라보는 당신을 위한 프로
 
 ## 빠른 시작
 
-**필수:** Node.js 20+, [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code), [claude-mem](https://github.com/thedotmack) 플러그인 (최소 1회 사용)
+**필수:** Node.js 20+, **Claude Pro/Max 구독 또는 Anthropic API 키로 로그인된** [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) (Free tier 만으로는 동작하지 않음), [claude-mem](https://github.com/thedotmack) 플러그인 (최소 1회 사용)
 
 ```bash
 git clone https://github.com/mysoul7306/claude-with-me.git
