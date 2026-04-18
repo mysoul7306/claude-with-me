@@ -291,6 +291,8 @@
     flex-direction: column;
     align-items: center;
     gap: 8px;
+    flex: 1;
+    min-width: 0;
   }
 
   .connection-line {
@@ -310,7 +312,7 @@
     font-size: 0.75rem;
     color: var(--text-dim);
     text-align: center;
-    max-width: 180px;
+    max-width: 100%;
     line-height: 1.6;
     margin-top: 4px;
   }
@@ -1054,12 +1056,20 @@ function renderJourney(journey) {
       const modelBadge = ws.generatedBy
         ? `<span style="display:inline-block;padding:2px 8px;background:color-mix(in srgb, var(--accent-user) 10%, transparent);color:var(--accent-user);border-radius:10px;font-size:0.65rem;">✨ ${ws.generatedBy}</span>`
         : '';
+      const projEmojiMap = {};
+      (journey.history || []).forEach(h => { if (h.projectEmoji && h.project) projEmojiMap[h.project] = h.projectEmoji; });
+      const weeklyBody = ws.text
+        .replace(/^---\n*/gm, '')
+        .replace(/\*\*(.+?)\*\*\n*/g, (_, name) => {
+          const emoji = projEmojiMap[name] || '📋';
+          return `<div style="margin-top:14px;margin-bottom:4px;"><span style="display:inline-block;padding:2px 10px;background:color-mix(in srgb, var(--accent-user) 12%, transparent);color:var(--accent-user);border-radius:10px;font-size:0.75rem;font-weight:600;">${emoji} ${name}</span></div>`;
+        });
       html += `<div style="margin-bottom:28px;padding:20px;background:color-mix(in srgb, var(--accent-user) 5%, var(--card-bg));border:1px solid color-mix(in srgb, var(--accent-user) 20%, transparent);border-radius:12px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
           <h3 style="color:var(--accent-user);font-size:1.1rem;margin:0;">📅 ${weeklyTitle} (${rangeStart} – ${rangeEnd})</h3>
           ${modelBadge}
         </div>
-        <div style="color:#cbd5e1;font-size:0.9rem;line-height:1.7;white-space:pre-line;">${ws.text}</div>
+        <div style="color:#cbd5e1;font-size:0.9rem;line-height:1.7;white-space:pre-line;">${weeklyBody}</div>
       </div>`;
     } else {
       html += `<div style="margin-bottom:28px;padding:20px;background:color-mix(in srgb, var(--accent-user) 3%, var(--card-bg));border:1px dashed color-mix(in srgb, var(--accent-user) 15%, transparent);border-radius:12px;text-align:center;">
@@ -1132,8 +1142,12 @@ function updateClock() {
   const s = String(now.getSeconds()).padStart(2, '0');
   document.getElementById('header-clock').textContent = `${h}:${m}:${s}`;
 }
-updateClock();
-setInterval(updateClock, 1000);
+if (new URLSearchParams(location.search).has('screenshot')) {
+  document.getElementById('header-clock').textContent = '00:00:00';
+} else {
+  updateClock();
+  setInterval(updateClock, 1000);
+}
 </script>
 
 </body>
