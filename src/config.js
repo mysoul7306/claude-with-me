@@ -24,6 +24,14 @@ const DEFAULTS = {
     modelPriority: ["opus", "sonnet"],
     cliPath: "claude",
   },
+  claudeMem: {
+    disableReadCache: false,
+    excludedProjects: [],
+    logPruner: {
+      enabled: false,
+      retentionDays: 7,
+    },
+  },
 };
 
 function loadConfig() {
@@ -70,6 +78,10 @@ function loadConfig() {
       excludedProjects: Array.isArray(raw.claudeMem?.excludedProjects)
         ? raw.claudeMem.excludedProjects
         : [],
+      logPruner: {
+        enabled: raw.claudeMem?.logPruner?.enabled ?? DEFAULTS.claudeMem.logPruner.enabled,
+        retentionDays: raw.claudeMem?.logPruner?.retentionDays ?? DEFAULTS.claudeMem.logPruner.retentionDays,
+      },
     },
   };
 }

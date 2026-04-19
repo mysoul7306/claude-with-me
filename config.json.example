@@ -17,6 +17,10 @@
   },
   "claudeMem": {
     "disableReadCache": false,
-    "excludedProjects": []
+    "excludedProjects": [],
+    "logPruner": {
+      "enabled": false,
+      "retentionDays": 7
+    }
   }
 }
