@@ -110,6 +110,23 @@ Open `config.json` to customize:
 
 Settings are synced to claude-mem on app startup.
 
+### claude-mem log pruner (opt-in)
+
+Automatically delete old `~/.claude-mem/logs/*.log` files. Disabled by default.
+
+```json
+{
+  "claudeMem": {
+    "logPruner": {
+      "enabled": true,
+      "retentionDays": 7
+    }
+  }
+}
+```
+
+When enabled, runs on server startup and every week at 05:00 on the day set by `journey.weekStartDay`.
+
 </details>
 
 <details>

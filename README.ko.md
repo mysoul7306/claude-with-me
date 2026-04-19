@@ -110,6 +110,23 @@ wsl --install
 
 설정은 앱 시작 시 자동으로 claude-mem에 동기화됩니다.
 
+### claude-mem 로그 pruner (opt-in)
+
+오래된 `~/.claude-mem/logs/*.log` 파일을 자동 삭제합니다. 기본값은 비활성.
+
+```json
+{
+  "claudeMem": {
+    "logPruner": {
+      "enabled": true,
+      "retentionDays": 7
+    }
+  }
+}
+```
+
+활성화 시 서버 시작 때 1회 실행 + 매주 `journey.weekStartDay` 요일 05:00 에 주기 실행.
+
 </details>
 
 <details>
