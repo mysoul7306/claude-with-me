@@ -95,6 +95,8 @@ wsl --install
 |------|------|--------|
 | `claudeMem.disableReadCache` | 파일 읽기 캐싱 hook 비활성화 (stale read 방지) | `false` |
 | `claudeMem.excludedProjects` | 추적에서 제외할 디렉토리 (glob 패턴 지원) | `[]` |
+| `claudeMem.logPruner.enabled` | claude-mem 로그 파일 주간 정리 활성화 여부 | `false` |
+| `claudeMem.logPruner.retentionDays` | 로그 파일 삭제 전 보관 기간 (일 단위) | `7` |
 
 ```json
 {

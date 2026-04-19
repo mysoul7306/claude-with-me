@@ -95,6 +95,8 @@ Open `config.json` to customize:
 |-------|-------------|---------|
 | `claudeMem.disableReadCache` | Disable file-read caching hook (prevents stale reads) | `false` |
 | `claudeMem.excludedProjects` | Directories to exclude from tracking (glob patterns) | `[]` |
+| `claudeMem.logPruner.enabled` | Enable weekly pruning of claude-mem log files | `false` |
+| `claudeMem.logPruner.retentionDays` | Days to retain log files before deletion | `7` |
 
 ```json
 {
