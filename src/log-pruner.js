@@ -8,12 +8,13 @@ const CLAUDE_MEM_LOGS_DIR = join(homedir(), ".claude-mem", "logs");
 const LOG_PATTERN = /^claude-mem-(\d{4}-\d{2}-\d{2})\.log$/;
 
 export function pruneOldLogs({ dir, maxAgeDays, pattern = LOG_PATTERN }) {
-  if (!maxAgeDays || maxAgeDays <= 0) {
+  const days = Number(maxAgeDays);
+  if (!Number.isFinite(days) || days <= 0) {
     return { deleted: [], bytesFreed: 0, skipped: [] };
   }
 
   const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - maxAgeDays);
+  cutoff.setDate(cutoff.getDate() - days);
   cutoff.setHours(0, 0, 0, 0);
 
   const result = { deleted: [], bytesFreed: 0, skipped: [] };
@@ -47,7 +48,7 @@ export function pruneOldLogs({ dir, maxAgeDays, pattern = LOG_PATTERN }) {
   return result;
 }
 
-function runPrune() {
+function runPrune({ prefix = "" } = {}) {
   const result = pruneOldLogs({
     dir: CLAUDE_MEM_LOGS_DIR,
     maxAgeDays: config.claudeMem.logPruner.retentionDays,
@@ -55,13 +56,13 @@ function runPrune() {
 
   if (result.deleted.length > 0) {
     const mb = (result.bytesFreed / (1024 * 1024)).toFixed(1);
-    console.log(`[log-pruner] Deleted ${result.deleted.length} old logs (${mb} MB freed)`);
+    console.log(`${prefix}[log-pruner] Deleted ${result.deleted.length} old logs (${mb} MB freed)`);
   } else {
-    console.log(`[log-pruner] No logs to prune`);
+    console.log(`${prefix}[log-pruner] No logs to prune`);
   }
 
   if (result.skipped.length > 0) {
-    console.warn(`[log-pruner] Skipped: ${result.skipped.join(", ")}`);
+    console.warn(`${prefix}[log-pruner] Skipped: ${result.skipped.join(", ")}`);
   }
 }
 
@@ -76,12 +77,12 @@ export function registerLogPrunerJobs() {
   const weekDay = config.journey.weekStartDay ?? 1;
   const cronExpr = `0 5 * * ${weekDay}`;
 
-  runPrune();
+  console.log(`  [log-pruner] Enabled (retention=${retentionDays}d, cron="${cronExpr}")`);
+  console.log(`  [log-pruner] Running startup sweep...`);
+  runPrune({ prefix: "  " });
 
   cron.schedule(cronExpr, () => {
     console.log(`[${new Date().toISOString()}] Cron: log-pruner weekly sweep`);
     runPrune();
   });
-
-  console.log(`  [log-pruner] Enabled (retention=${retentionDays}d, cron="${cronExpr}")`);
 }

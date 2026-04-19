@@ -80,7 +80,9 @@ function loadConfig() {
         : [],
       logPruner: {
         enabled: raw.claudeMem?.logPruner?.enabled ?? DEFAULTS.claudeMem.logPruner.enabled,
-        retentionDays: raw.claudeMem?.logPruner?.retentionDays ?? DEFAULTS.claudeMem.logPruner.retentionDays,
+        retentionDays: Number.isFinite(Number(raw.claudeMem?.logPruner?.retentionDays))
+          ? Number(raw.claudeMem.logPruner.retentionDays)
+          : DEFAULTS.claudeMem.logPruner.retentionDays,
       },
     },
   };
