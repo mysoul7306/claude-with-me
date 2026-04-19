@@ -95,6 +95,8 @@ Open `config.json` to customize:
 |-------|-------------|---------|
 | `claudeMem.disableReadCache` | Disable file-read caching hook (prevents stale reads) | `false` |
 | `claudeMem.excludedProjects` | Directories to exclude from tracking (glob patterns) | `[]` |
+| `claudeMem.logPruner.enabled` | Enable weekly pruning of claude-mem log files | `false` |
+| `claudeMem.logPruner.retentionDays` | Days to retain log files before deletion | `7` |
 
 ```json
 {
@@ -109,6 +111,23 @@ Open `config.json` to customize:
 ```
 
 Settings are synced to claude-mem on app startup.
+
+### claude-mem log pruner (opt-in)
+
+Automatically delete old `~/.claude-mem/logs/*.log` files. Disabled by default.
+
+```json
+{
+  "claudeMem": {
+    "logPruner": {
+      "enabled": true,
+      "retentionDays": 7
+    }
+  }
+}
+```
+
+When enabled, runs on server startup and every week at 05:00 on the day set by `journey.weekStartDay`.
 
 </details>
 
