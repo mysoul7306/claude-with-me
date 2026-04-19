@@ -70,3 +70,4 @@ Key settings:
 - **Caching:** AI-generated content from claude-gen.js is stored as JSON files in `cache/`, auto-refreshed at midnight
 - **DB:** Accesses claude-mem SQLite DB in **read-only** mode — never writes to it
 - **Hooks patching:** Auto-syncs claude-mem hook settings on app startup
+- **Log pruning:** Opt-in weekly cleanup of `~/.claude-mem/logs/*.log` via `config.claudeMem.logPruner`
