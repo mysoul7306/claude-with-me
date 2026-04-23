@@ -297,14 +297,8 @@ export async function getWeeklySummary(history) {
   return { text: null, startDate, endDate };
 }
 
-export function scheduleRefreshCycles(refreshJourney) {
-  const intervalMin = config.journey.refreshIntervalMin ?? 60;
+export function scheduleCacheInvalidation() {
   const weekDay = config.journey.weekStartDay ?? 1;
-
-  cron.schedule(`*/${intervalMin} * * * *`, () => {
-    console.log(`[${new Date().toISOString()}] Cron: journey refresh`);
-    refreshJourney();
-  });
 
   cron.schedule("0 0 * * *", () => {
     console.log(`[${new Date().toISOString()}] Cron: daily voice refresh`);
@@ -316,5 +310,5 @@ export function scheduleRefreshCycles(refreshJourney) {
     invalidateCaches("profile", "relationship", "philosophy", "avatar-decor", "accent-color", "weekly-summary");
   });
 
-  console.log(`  Cron: journey every ${intervalMin}m, voice daily, weekly on day ${weekDay}`);
+  console.log(`  Cron: voice daily, weekly on day ${weekDay}`);
 }

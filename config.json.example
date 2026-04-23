@@ -8,8 +8,7 @@
   "journey": {
     "historyLimit": 20,
     "excludedProjectNames": ["Workspaces", "Workspace", "observer-sessions"],
-    "weekStartDay": 1,
-    "refreshIntervalMin": 60
+    "weekStartDay": 1
   },
   "claude": {
     "modelPriority": ["opus", "sonnet"],

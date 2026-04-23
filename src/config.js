@@ -15,7 +15,6 @@ const DEFAULTS = {
     // Override via config.json if needed.
     excludedProjectNames: ["Workspaces", "Workspace", "observer-sessions"],
     weekStartDay: 1, // 0=Sun, 1=Mon, ..., 6=Sat
-    refreshIntervalMin: 60,
   },
   claude: {
     // Models tried in order. First success wins. Fallback only on explicit
@@ -63,7 +62,6 @@ function loadConfig() {
         ? raw.journey.excludedProjectNames
         : DEFAULTS.journey.excludedProjectNames,
       weekStartDay: raw.journey?.weekStartDay ?? DEFAULTS.journey.weekStartDay,
-      refreshIntervalMin: raw.journey?.refreshIntervalMin ?? DEFAULTS.journey.refreshIntervalMin,
     },
     claude: {
       modelPriority: Array.isArray(raw.claude?.modelPriority)
