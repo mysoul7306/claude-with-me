@@ -2,20 +2,18 @@ import express from "express";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { config } from "./src/config.js";
-import { t, interpolate } from "./src/i18n.js";
-import { getStats, getJourneyHistory, getLatestSummaryEpoch } from "./src/db.js";
+import { t } from "./src/i18n.js";
+import { getStats, getJourneyHistory } from "./src/db.js";
 import {
   getProfile, getRelationship, getPhilosophy, getVoice,
   getAvatarDecor, getAccentColor, getWeeklySummary,
-  getProjectEmojis, scheduleRefreshCycles,
-  readCache, writeCache,
+  getProjectEmojis, scheduleCacheInvalidation,
 } from "./src/claude-gen.js";
 import { patchClaudeMemHooks, syncExcludedProjects } from "./src/hooks-patcher.js";
 import { registerLogPrunerJobs } from "./src/log-pruner.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = config.port;
-const JOURNEY_TTL = (config.journey.refreshIntervalMin ?? 60) * 60 * 1000;
 
 const app = express();
 app.use(express.static(join(__dirname, "public")));
@@ -35,16 +33,18 @@ app.get("/api/config", async (_req, res) => {
 app.get("/api/stats", (_req, res) => res.json(getStats()));
 
 app.get("/api/journey", async (_req, res) => {
-  let journeyData;
-  const cached = readCache("journey", JOURNEY_TTL);
-  if (cached?.content) {
-    journeyData = { ...cached.content, generatedAt: cached.generatedAt };
-  } else {
-    journeyData = await buildJourney();
-  }
+  const history = getJourneyHistory();
 
-  const weeklySummary = await getWeeklySummary(journeyData.history || []);
-  res.json({ ...journeyData, weeklySummary });
+  const allProjects = [...new Set(history.map((h) => h.project))];
+  const emojis = await getProjectEmojis(allProjects);
+
+  const historyWithEmoji = history.map((h) => ({
+    ...h,
+    projectEmoji: emojis[h.project] || "",
+  }));
+
+  const weeklySummary = await getWeeklySummary(historyWithEmoji);
+  res.json({ history: historyWithEmoji, weeklySummary });
 });
 
 app.get("/api/profile", async (_req, res) => res.json(await getProfile(getStats())));
@@ -62,45 +62,10 @@ app.get("/api/accent-color", async (_req, res) => {
   res.json(result);
 });
 
-let lastKnownEpoch = 0;
-
-async function buildJourney() {
-  const history = getJourneyHistory();
-
-  const allProjects = [...new Set(history.map((h) => h.project))];
-  const emojis = await getProjectEmojis(allProjects);
-
-  const historyWithEmoji = history.map((h) => ({
-    ...h,
-    projectEmoji: emojis[h.project] || "",
-  }));
-
-  const payload = { history: historyWithEmoji };
-  const written = writeCache("journey", payload);
-  return { ...payload, generatedAt: written.generatedAt };
-}
-
-async function refreshJourney() {
-  const currentEpoch = getLatestSummaryEpoch();
-  if (currentEpoch === lastKnownEpoch) {
-    console.log(`[${new Date().toISOString()}] Journey: no DB changes, skipping`);
-    return;
-  }
-  lastKnownEpoch = currentEpoch;
-
-  try {
-    await buildJourney();
-    console.log(`[${new Date().toISOString()}] Journey: refreshed`);
-  } catch (err) {
-    console.warn("[journey] Refresh failed:", err.message);
-  }
-}
-
 app.listen(PORT, () => {
   console.log(`\n  claude-with-me is running at http://localhost:${PORT}`);
 
-  scheduleRefreshCycles(refreshJourney);
-  refreshJourney();
+  scheduleCacheInvalidation();
   registerLogPrunerJobs();
 
   const hookResult = patchClaudeMemHooks(config.claudeMem);
