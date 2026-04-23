@@ -85,7 +85,6 @@ wsl --install
 | `journey.historyLimit` | History 표시 개수 | `20` |
 | `journey.excludedProjectNames` | 노이즈로 필터링할 프로젝트명 | `["Workspaces", "Workspace", "observer-sessions"]` |
 | `journey.weekStartDay` | 주간 갱신 요일 — 프로필, 관계, 철학, 주간 요약 (0=일, 1=월) | `1` |
-| `journey.refreshIntervalMin` | History 갱신 주기 (분) | `60` |
 | `claude.modelPriority` | 시도할 모델 순서. 운영 실패(rate limit/timeout/unavailable) 시에만 다음 모델로 fallback | `["opus", "sonnet"]` |
 | `claude.cliPath` | Claude CLI 경로 | `"claude"` |
 

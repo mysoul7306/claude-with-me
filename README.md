@@ -85,7 +85,6 @@ Open `config.json` to customize:
 | `journey.historyLimit` | History entries to display | `20` |
 | `journey.excludedProjectNames` | Project names filtered as noise | `["Workspaces", "Workspace", "observer-sessions"]` |
 | `journey.weekStartDay` | Day of week for weekly refresh — profile, relationship, philosophy, and weekly summary (0=Sun, 1=Mon) | `1` |
-| `journey.refreshIntervalMin` | History refresh interval in minutes | `60` |
 | `claude.modelPriority` | Models tried in order; fallback only on operational failure | `["opus", "sonnet"]` |
 | `claude.cliPath` | Path to Claude CLI | `"claude"` |
 
