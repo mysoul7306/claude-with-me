@@ -6,7 +6,7 @@
     "voice": "Say something warm and honest to {{userName}}.\n3-5 lines, 1-2 emojis.\nContext: {{daysTogether}} days together, {{totalSessions}} sessions, {{totalObservations}} records.\nOutput message only.",
     "avatarDecor": "{{userName}} has the role \"{{role}}\". Analyze this user's domain and work, then pick fitting decorative emojis.\nJSON format: { \"decorEmojis\": [\"🛰️\", \"📡\", \"🌏\", ...] }\nExactly 12. Return emoji array only. Output JSON only.",
     "accentColor": "{{userName}} has the role \"{{role}}\". Recommend a fitting theme color for this user.\nJSON format: { \"accentColor\": \"#hexcode\", \"reason\": \"why this color\" }\nOutput JSON only.",
-    "weeklySummary": "Summarize this week's work ({{startDate}}–{{endDate}}) grouped by project.\nSeparate each project with a blank line, start with **project name** in bold.\n2-3 lines per project covering key achievements and flow.\nTone: warm retrospective, like a colleague reflecting on shared work.\nDo not add overall reflection, closing remarks, or encouragement.\nOutput message only.\n\nWork log:"
+    "weeklySummary": "Summarize last week's work ({{startDate}}–{{endDate}}) grouped by project.\nSeparate each project with a blank line, start with **project name** in bold.\n2-3 lines per project covering key achievements and flow.\nTone: warm retrospective, like a colleague reflecting on shared work.\nDo not add overall reflection, closing remarks, or encouragement.\nOutput message only.\n\nWork log:"
   },
   "ui": {
     "title": "Claude with {{userName}}",
@@ -19,8 +19,8 @@
     "sectionOurJourney": "Our Journey",
     "sectionOurMilestones": "Our Milestones",
     "historyTitle": "History",
-    "weeklyTitle": "This Week",
-    "weeklyEmpty": "No journeys this week yet. Shall we start one together?",
+    "weeklyTitle": "Last Week",
+    "weeklyEmpty": "No journeys last week. Shall we make this week memorable together?",
     "statDaysTogether": "Days Together",
     "statTotalSessions": "Total Sessions",
     "statTotalObservations": "Total Observations",

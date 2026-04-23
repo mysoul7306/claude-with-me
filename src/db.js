@@ -128,8 +128,3 @@ export function getJourneyHistory() {
   }));
 }
 
-export function getLatestSummaryEpoch() {
-  if (!db) return 0;
-  const row = db.prepare("SELECT MAX(created_at_epoch) as latest FROM session_summaries").get();
-  return row?.latest || 0;
-}

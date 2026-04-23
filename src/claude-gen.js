@@ -12,18 +12,25 @@ const execAsync = promisify(exec);
 const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
 const ONE_DAY = 24 * 60 * 60 * 1000;
 
-function getWeekRange() {
+function formatLocalDate(d) {
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function getLastWeekRange() {
   const weekDay = config.journey.weekStartDay ?? 1;
   const today = new Date();
   const diff = (today.getDay() - weekDay + 7) % 7;
   const weekStart = new Date(today);
-  weekStart.setDate(today.getDate() - diff);
+  weekStart.setDate(today.getDate() - diff - 7);
   weekStart.setHours(0, 0, 0, 0);
   const weekEnd = new Date(weekStart);
   weekEnd.setDate(weekEnd.getDate() + 6);
   return {
-    startDate: weekStart.toISOString().split("T")[0],
-    endDate: weekEnd.toISOString().split("T")[0],
+    startDate: formatLocalDate(weekStart),
+    endDate: formatLocalDate(weekEnd),
   };
 }
 
@@ -266,10 +273,10 @@ export async function getAccentColor() {
 // --- Weekly Summary: AI-generated week recap (7-day cache) ---
 
 export async function getWeeklySummary(history) {
-  const { startDate, endDate } = getWeekRange();
-  const thisWeek = history.filter((h) => h.date >= startDate);
+  const { startDate, endDate } = getLastWeekRange();
+  const lastWeek = history.filter((h) => h.date >= startDate && h.date <= endDate);
 
-  if (thisWeek.length === 0) {
+  if (lastWeek.length === 0) {
     return { text: null, startDate, endDate };
   }
 
@@ -278,7 +285,7 @@ export async function getWeeklySummary(history) {
     return { ...cached.content, generatedBy: cached.generatedBy, generatedAt: cached.generatedAt };
   }
 
-  const serialized = thisWeek
+  const serialized = lastWeek
     .map((h) => `${h.project}: ${h.title} (${h.description})`)
     .join("\n");
 
@@ -297,14 +304,8 @@ export async function getWeeklySummary(history) {
   return { text: null, startDate, endDate };
 }
 
-export function scheduleRefreshCycles(refreshJourney) {
-  const intervalMin = config.journey.refreshIntervalMin ?? 60;
+export function scheduleCacheInvalidation() {
   const weekDay = config.journey.weekStartDay ?? 1;
-
-  cron.schedule(`*/${intervalMin} * * * *`, () => {
-    console.log(`[${new Date().toISOString()}] Cron: journey refresh`);
-    refreshJourney();
-  });
 
   cron.schedule("0 0 * * *", () => {
     console.log(`[${new Date().toISOString()}] Cron: daily voice refresh`);
@@ -316,5 +317,5 @@ export function scheduleRefreshCycles(refreshJourney) {
     invalidateCaches("profile", "relationship", "philosophy", "avatar-decor", "accent-color", "weekly-summary");
   });
 
-  console.log(`  Cron: journey every ${intervalMin}m, voice daily, weekly on day ${weekDay}`);
+  console.log(`  Cron: voice daily, weekly on day ${weekDay}`);
 }
