@@ -12,7 +12,6 @@
     "title": "Claude with {{userName}}",
     "loading": "로딩 중...",
     "errorCli": "Claude CLI 연결에 실패했습니다",
-    "errorAvatarDecor": "아바타 장식 생성에 실패했습니다",
     "sectionThroughMyEyes": "Through My Eyes",
     "sectionClaudeWithMe": "Claude With Me",
     "sectionOurPhilosophy": "Our Philosophy",
