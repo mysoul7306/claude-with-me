@@ -85,7 +85,7 @@ Open `config.json` to customize:
 | `journey.historyLimit` | History entries to display | `20` |
 | `journey.excludedProjectNames` | Project names filtered as noise | `["Workspaces", "Workspace", "observer-sessions"]` |
 | `journey.weekStartDay` | Day of week for weekly refresh — profile, relationship, philosophy, and weekly summary (0=Sun, 1=Mon) | `1` |
-| `claude.modelPriority` | Models tried in order; fallback only on operational failure | `["opus", "sonnet"]` |
+| `claude.modelPriority` | Models tried in order; fallback only on operational failure | `["sonnet", "opus"]` |
 | `claude.cliPath` | Path to Claude CLI | `"claude"` |
 
 ### claude-mem Integration
@@ -188,21 +188,19 @@ claude-with-me uses Claude Code CLI (`claude --print`) for dynamic content gener
 
 ### Model Priority
 
-By default, Opus is tried first; Sonnet is used as fallback only on **explicit operational failures** (rate limit, timeout, provider unavailable). The current model is shown next to each section title (e.g., `· ✨ opus · 5m ago`).
+By default, Sonnet is tried first; Opus is used as fallback only on **explicit operational failures** (rate limit, timeout, provider unavailable). This default keeps usage comfortably within Claude Pro session/weekly budgets out of the box. The current model is shown next to each section title (e.g., `· ✨ sonnet · 5m ago`).
 
 ```json
 "claude": {
-  "modelPriority": ["opus", "sonnet"]
+  "modelPriority": ["sonnet", "opus"]
 }
 ```
 
-To prefer Sonnet (cheaper, faster), reorder: `["sonnet", "opus"]`. To force a single model, use one entry: `["sonnet"]`.
-
-> **Pro tier tip:** Pro users may prefer `["sonnet", "opus"]` (sonnet-first) to stay comfortably within session/weekly budgets, with opus as a fallback for harder generations.
+If you're on Max (or running via API) and prefer premium quality up front, reorder: `["opus", "sonnet"]`. To force a single model, use one entry: `["sonnet"]`.
 
 ### Estimated Monthly Tokens
 
-| Item | Frequency | Tokens (Opus) |
+| Item | Frequency | Tokens (~estimate) |
 |---|---|---|
 | Voice message | Daily | ~45K |
 | Profile / Relationship / Philosophy | Weekly | ~28K |
@@ -214,7 +212,7 @@ To prefer Sonnet (cheaper, faster), reorder: `["sonnet", "opus"]`. To force a si
 ### Cost in Practice
 
 - **Claude Code subscription (Pro $20, Max 5x $100, Max 20x $200):** Tokens are included in your plan — **no separate charges**. ~85K/month is roughly 1–2 typical chat sessions worth of usage.
-- **Direct API:** Roughly $2–3/month at Opus prices, less if Sonnet-first.
+- **Direct API:** Roughly $1/month with the default sonnet-first; ~$2–3/month if you switch to opus-first.
 
 <details>
 <summary><strong>Troubleshooting</strong></summary>
