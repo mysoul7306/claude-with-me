@@ -27,6 +27,7 @@ src/
   claude-gen.js        # Claude CLI calls for profile/relationship/philosophy/voice + caching
   hooks-patcher.js     # Auto-patches claude-mem hooks (disableReadCache, excludedProjects)
   i18n.js              # i18n support (en/ko)
+  log-pruner.js        # Opt-in weekly cleanup of ~/.claude-mem/logs/*.log
 public/
   index.html           # SPA dashboard (vanilla JS)
 i18n/
