@@ -12,7 +12,6 @@
     "title": "Claude with {{userName}}",
     "loading": "loading...",
     "errorCli": "Failed to connect to Claude CLI",
-    "errorAvatarDecor": "Failed to generate avatar decorations",
     "sectionThroughMyEyes": "Through My Eyes",
     "sectionClaudeWithMe": "Claude With Me",
     "sectionOurPhilosophy": "Our Philosophy",

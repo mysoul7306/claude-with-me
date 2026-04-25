@@ -20,7 +20,9 @@ const DEFAULTS = {
     // Models tried in order. First success wins. Fallback only on explicit
     // operational failures (rate_limit / timeout / unavailable) — never on
     // quality heuristics. Each generated section reports which model produced it.
-    modelPriority: ["opus", "sonnet"],
+    // Default is sonnet-first to keep usage within Claude Pro session/weekly
+    // budgets out of the box; Max users can switch to ["opus", "sonnet"].
+    modelPriority: ["sonnet", "opus"],
     cliPath: "claude",
   },
   claudeMem: {

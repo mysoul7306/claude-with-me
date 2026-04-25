@@ -11,7 +11,7 @@
     "weekStartDay": 1
   },
   "claude": {
-    "modelPriority": ["opus", "sonnet"],
+    "modelPriority": ["sonnet", "opus"],
     "cliPath": "claude"
   },
   "claudeMem": {

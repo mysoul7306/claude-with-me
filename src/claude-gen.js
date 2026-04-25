@@ -64,7 +64,14 @@ const FALLBACK_TRIGGERS = new Set(["rate_limit", "timeout", "unavailable"]);
 
 function classifyClaudeError(err) {
   const msg = (err?.message ?? "").toLowerCase();
-  if (msg.includes("rate") || msg.includes("429")) return "rate_limit";
+  // Pro/Max session and weekly limits surface as plain "limit reached" / "weekly limit"
+  // messages without the word "rate" — broaden the match so fallback still triggers.
+  if (msg.includes("rate") || msg.includes("429") || msg.includes("quota") ||
+      msg.includes("limit reached") || msg.includes("limit exceeded") ||
+      msg.includes("weekly limit") || msg.includes("session limit") ||
+      msg.includes("usage limit")) {
+    return "rate_limit";
+  }
   if (msg.includes("timeout") || msg.includes("etimedout")) return "timeout";
   if (msg.includes("unavailable") || msg.includes("503") || msg.includes("overloaded")) return "unavailable";
   return "other";
@@ -121,6 +128,20 @@ export function invalidateCaches(...types) {
   }
 }
 
+// Shared cache → prompt → Claude → parseJson flow used by JSON generators.
+// Variants that need a different shape (Voice raw text, AccentColor config priority,
+// WeeklySummary history filter, ProjectEmojis incremental merge) keep their own bodies.
+async function generateAndCache(type, ttl, prompt) {
+  const cached = readCache(type, ttl);
+  if (cached) return cached;
+  const res = await callClaude(prompt);
+  if (res?.content) {
+    const parsed = parseJson(res.content);
+    if (parsed) return { ...writeCache(type, parsed, res.generatedBy), cached: false };
+  }
+  return { error: true, message: t.ui.errorCli };
+}
+
 const PROJECT_EMOJI_PROMPT = `Given these software project names, assign one emoji that represents each project's likely domain. Output JSON: {"projectName": "emoji", ...}. Only output the JSON object.`;
 
 export async function getProjectEmojis(projectNames) {
@@ -152,61 +173,31 @@ export async function getProjectEmojis(projectNames) {
 // --- Profile: "Through My Eyes" (7-day cache) ---
 
 export async function getProfile(stats) {
-  const cached = readCache("profile", SEVEN_DAYS);
-  if (cached) return cached;
-
   const prompt = interpolate(t.prompts.profile, {
     userName: config.userName,
     role: config.role,
     daysTogether: stats.daysTogether,
     totalSessions: stats.totalSessions,
   });
-
-  const res = await callClaude(prompt);
-  if (res?.content) {
-    const parsed = parseJson(res.content);
-    if (parsed) return { ...writeCache("profile", parsed, res.generatedBy), cached: false };
-  }
-
-  return { error: true, message: t.ui.errorCli };
+  return generateAndCache("profile", SEVEN_DAYS, prompt);
 }
 
 // --- Relationship: "Claude With Me" (7-day cache) ---
 
 export async function getRelationship(stats) {
-  const cached = readCache("relationship", SEVEN_DAYS);
-  if (cached) return cached;
-
   const prompt = interpolate(t.prompts.relationship, {
     userName: config.userName,
   });
-
-  const res = await callClaude(prompt);
-  if (res?.content) {
-    const parsed = parseJson(res.content);
-    if (parsed) return { ...writeCache("relationship", parsed, res.generatedBy), cached: false };
-  }
-
-  return { error: true, message: t.ui.errorCli };
+  return generateAndCache("relationship", SEVEN_DAYS, prompt);
 }
 
 // --- Philosophy: "Our Philosophy" (7-day cache) ---
 
 export async function getPhilosophy(stats) {
-  const cached = readCache("philosophy", SEVEN_DAYS);
-  if (cached) return cached;
-
   const prompt = interpolate(t.prompts.philosophy, {
     userName: config.userName,
   });
-
-  const res = await callClaude(prompt);
-  if (res?.content) {
-    const parsed = parseJson(res.content);
-    if (parsed) return { ...writeCache("philosophy", parsed, res.generatedBy), cached: false };
-  }
-
-  return { error: true, message: t.ui.errorCli };
+  return generateAndCache("philosophy", SEVEN_DAYS, prompt);
 }
 
 // --- Voice: Footer message (1-day cache) ---
@@ -233,20 +224,11 @@ export async function getVoice(stats) {
 // --- Avatar Decor: decorative emojis (7-day cache) ---
 
 export async function getAvatarDecor() {
-  const cached = readCache("avatar-decor", SEVEN_DAYS);
-  if (cached) return cached;
-
   const prompt = interpolate(t.prompts.avatarDecor, {
     userName: config.userName,
     role: config.role,
   });
-
-  const res = await callClaude(prompt);
-  if (res?.content) {
-    const parsed = parseJson(res.content);
-    if (parsed) return { ...writeCache("avatar-decor", parsed, res.generatedBy), cached: false };
-  }
-  return { error: true, message: t.ui.errorAvatarDecor };
+  return generateAndCache("avatar-decor", SEVEN_DAYS, prompt);
 }
 
 // --- Accent Color: theme color (config priority, else 7-day cache) ---
