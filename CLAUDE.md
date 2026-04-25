@@ -53,7 +53,7 @@ Key settings:
 - `userName`, `role`, `avatar` — Dashboard display info
 - `accentColor` — User accent color applied to avatar, role label, journey line
 - `language` — Dashboard language (`en` / `ko`)
-- `claude.modelPriority` — Models tried in order; fallback only on operational failure (`["opus", "sonnet"]`)
+- `claude.modelPriority` — Models tried in order; fallback only on operational failure (`["sonnet", "opus"]`, sonnet-first for Pro tier comfort)
 - `claudeMem.disableReadCache` — Disable file-read caching hook
 - `claudeMem.excludedProjects` — Paths to exclude from tracking
 
