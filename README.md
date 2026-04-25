@@ -198,6 +198,8 @@ By default, Opus is tried first; Sonnet is used as fallback only on **explicit o
 
 To prefer Sonnet (cheaper, faster), reorder: `["sonnet", "opus"]`. To force a single model, use one entry: `["sonnet"]`.
 
+> **Pro tier tip:** Pro users may prefer `["sonnet", "opus"]` (sonnet-first) to stay comfortably within session/weekly budgets, with opus as a fallback for harder generations.
+
 ### Estimated Monthly Tokens
 
 | Item | Frequency | Tokens (Opus) |
@@ -211,7 +213,7 @@ To prefer Sonnet (cheaper, faster), reorder: `["sonnet", "opus"]`. To force a si
 
 ### Cost in Practice
 
-- **Claude Code subscription (Pro $20, Max $100):** Tokens are included in your plan — **no separate charges**. ~85K/month is roughly 1–2 typical chat sessions worth of usage.
+- **Claude Code subscription (Pro $20, Max 5x $100, Max 20x $200):** Tokens are included in your plan — **no separate charges**. ~85K/month is roughly 1–2 typical chat sessions worth of usage.
 - **Direct API:** Roughly $2–3/month at Opus prices, less if Sonnet-first.
 
 <details>
