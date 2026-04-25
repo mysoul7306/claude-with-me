@@ -6,7 +6,4 @@ logs/
 .DS_Store
 .env
 .idea/
-.superpowers/
-assets/superpowers/
 docs/superpowers/
-scripts/test-docker.sh
