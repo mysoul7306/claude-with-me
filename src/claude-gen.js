@@ -64,7 +64,14 @@ const FALLBACK_TRIGGERS = new Set(["rate_limit", "timeout", "unavailable"]);
 
 function classifyClaudeError(err) {
   const msg = (err?.message ?? "").toLowerCase();
-  if (msg.includes("rate") || msg.includes("429")) return "rate_limit";
+  // Pro/Max session and weekly limits surface as plain "limit reached" / "weekly limit"
+  // messages without the word "rate" — broaden the match so fallback still triggers.
+  if (msg.includes("rate") || msg.includes("429") || msg.includes("quota") ||
+      msg.includes("limit reached") || msg.includes("limit exceeded") ||
+      msg.includes("weekly limit") || msg.includes("session limit") ||
+      msg.includes("usage limit")) {
+    return "rate_limit";
+  }
   if (msg.includes("timeout") || msg.includes("etimedout")) return "timeout";
   if (msg.includes("unavailable") || msg.includes("503") || msg.includes("overloaded")) return "unavailable";
   return "other";
