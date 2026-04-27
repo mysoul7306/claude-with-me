@@ -6,7 +6,7 @@ import { t } from "./src/i18n.js";
 import { getStats, getJourneyHistory } from "./src/db.js";
 import {
   getProfile, getRelationship, getPhilosophy, getVoice,
-  getAvatarDecor, getAccentColor, getWeeklySummary,
+  getAvatarDecor, getAccentColor, getWeeklySummary, getMood,
   getProjectEmojis, scheduleCacheInvalidation,
 } from "./src/claude-gen.js";
 import { patchClaudeMemHooks, syncExcludedProjects } from "./src/hooks-patcher.js";
@@ -46,6 +46,8 @@ app.get("/api/journey", async (_req, res) => {
   const weeklySummary = await getWeeklySummary(historyWithEmoji);
   res.json({ history: historyWithEmoji, weeklySummary });
 });
+
+app.get("/api/mood", async (_req, res) => res.json(await getMood(getJourneyHistory())));
 
 app.get("/api/profile", async (_req, res) => res.json(await getProfile(getStats())));
 app.get("/api/relationship", async (_req, res) => res.json(await getRelationship(getStats())));

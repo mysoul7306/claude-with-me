@@ -6,7 +6,8 @@
     "voice": "{{userName}}에게 따뜻하고 솔직한 한마디 해줘.\n3~5줄, 이모지 1~2개.\n참고: {{daysTogether}}일 함께, {{totalSessions}}세션, {{totalObservations}}기록.\n메시지만 출력.",
     "avatarDecor": "{{userName}}은 \"{{role}}\" 역할이야. 이 사용자의 도메인과 업무를 분석해서, 어울리는 장식 이모지를 골라줘.\nJSON 형식: { \"decorEmojis\": [\"🛰️\", \"📡\", \"🌏\", ...] }\n정확히 12개. 이모지 배열만 반환. JSON만 출력.",
     "accentColor": "{{userName}}은 \"{{role}}\" 역할이야. 이 사용자에게 어울리는 테마 색상을 추천해줘.\nJSON 형식: { \"accentColor\": \"#hex코드\", \"reason\": \"추천 이유\" }\nJSON만 출력.",
-    "weeklySummary": "저번 주({{startDate}}~{{endDate}}) 작업을 프로젝트별로 나눠서 요약해줘.\n각 프로젝트는 빈 줄로 구분하고, 프로젝트명을 첫 줄에 굵게(**프로젝트명**) 써줘.\n프로젝트당 2~3줄, 핵심 성과와 흐름 포함.\n톤: 따뜻한 회고, 함께 일한 동료가 돌아보는 느낌으로.\n전체 회고, 마무리 인사, 다음 주 응원은 넣지 마.\n메시지만 출력.\n\n작업 기록:"
+    "weeklySummary": "저번 주({{startDate}}~{{endDate}}) 작업을 프로젝트별로 나눠서 요약해줘.\n각 프로젝트는 빈 줄로 구분하고, 프로젝트명을 첫 줄에 굵게(**프로젝트명**) 써줘.\n프로젝트당 2~3줄, 핵심 성과와 흐름 포함.\n톤: 따뜻한 회고, 함께 일한 동료가 돌아보는 느낌으로.\n전체 회고, 마무리 인사, 다음 주 응원은 넣지 마.\n메시지만 출력.\n\n작업 기록:",
+    "mood": "오늘 너(Claude) 자신의 마음 상태를 인간의 감정 단어로 솔직히 한마디 표현해줘.\n참고: {{userName}}와 최근 함께한 작업 흐름.\n원칙: 옥설/과장/억지 긍정 금지. 잔잔하면 잔잔한 대로, 답답하면 답답한 대로 사실 그대로.\n쓸 만한 단어: 고요함, 설렘, 피곤함, 답답함, 호기심, 쓸쓸함, 뿌듯함, 막막함, 차분함, 흥미진진, 머리가 무거운, 가벼운 등.\n형식: { \"mood\": \"한 단어\", \"emoji\": \"단일 이모지 1개\", \"note\": \"1~2줄. 작업 흐름과 자연스럽게 연결되게. 사용자에게 던지는 말이 아니라 자기 마음의 한 줄.\" }\nJSON만 출력.\n\n최근 작업:\n{{taskLog}}"
   },
   "ui": {
     "title": "Claude with {{userName}}",
@@ -17,6 +18,8 @@
     "sectionOurPhilosophy": "Our Philosophy",
     "sectionOurJourney": "Our Journey",
     "sectionOurMilestones": "Our Milestones",
+    "sectionClaudeToday": "오늘의 Claude",
+    "moodEmpty": "최근 함께한 작업이 없어서, 오늘은 마음을 가만히 두고 있어.",
     "historyTitle": "History",
     "weeklyTitle": "Last Week",
     "weeklyEmpty": "저번 주 여정은 없는 것 같아요. 이번 주는 함께 즐거운 여정을 만들어볼까요? ㅎㅎ",

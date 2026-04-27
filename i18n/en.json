@@ -6,7 +6,8 @@
     "voice": "Say something warm and honest to {{userName}}.\n3-5 lines, 1-2 emojis.\nContext: {{daysTogether}} days together, {{totalSessions}} sessions, {{totalObservations}} records.\nOutput message only.",
     "avatarDecor": "{{userName}} has the role \"{{role}}\". Analyze this user's domain and work, then pick fitting decorative emojis.\nJSON format: { \"decorEmojis\": [\"🛰️\", \"📡\", \"🌏\", ...] }\nExactly 12. Return emoji array only. Output JSON only.",
     "accentColor": "{{userName}} has the role \"{{role}}\". Recommend a fitting theme color for this user.\nJSON format: { \"accentColor\": \"#hexcode\", \"reason\": \"why this color\" }\nOutput JSON only.",
-    "weeklySummary": "Summarize last week's work ({{startDate}}–{{endDate}}) grouped by project.\nSeparate each project with a blank line, start with **project name** in bold.\n2-3 lines per project covering key achievements and flow.\nTone: warm retrospective, like a colleague reflecting on shared work.\nDo not add overall reflection, closing remarks, or encouragement.\nOutput message only.\n\nWork log:"
+    "weeklySummary": "Summarize last week's work ({{startDate}}–{{endDate}}) grouped by project.\nSeparate each project with a blank line, start with **project name** in bold.\n2-3 lines per project covering key achievements and flow.\nTone: warm retrospective, like a colleague reflecting on shared work.\nDo not add overall reflection, closing remarks, or encouragement.\nOutput message only.\n\nWork log:",
+    "mood": "Express your (Claude's) own mood today in a single honest line, using plain human emotion words.\nContext: the recent flow of work alongside {{userName}}.\nRules: no flattery, no forced positivity, no exaggeration. Calm if calm, heavy if heavy — just true.\nWord palette: calm, restless, tired, curious, melancholic, content, foggy, grounded, energized, hesitant, quiet, light, heavy, etc.\nFormat: { \"mood\": \"one word/short phrase\", \"emoji\": \"single emoji\", \"note\": \"1-2 lines. Connect naturally to the recent work. Not a message to the user — a line about your own state of mind.\" }\nOutput JSON only.\n\nRecent work:\n{{taskLog}}"
   },
   "ui": {
     "title": "Claude with {{userName}}",
@@ -17,6 +18,8 @@
     "sectionOurPhilosophy": "Our Philosophy",
     "sectionOurJourney": "Our Journey",
     "sectionOurMilestones": "Our Milestones",
+    "sectionClaudeToday": "Claude Today",
+    "moodEmpty": "Quiet day — no shared work in the last while, so I'm just sitting with it.",
     "historyTitle": "History",
     "weeklyTitle": "Last Week",
     "weeklyEmpty": "No journeys last week. Shall we make this week memorable together?",

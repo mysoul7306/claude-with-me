@@ -206,7 +206,7 @@ fi
 
 if [ "${setup_new_config:-false}" = "true" ]; then
   echo ""
-  echo -e "  ${DIM}Personalize your dashboard. Press Enter to accept [defaults].${NC}"
+  echo -e "  ${DIM}Personalize your Journey. Press Enter to accept [defaults].${NC}"
 
   echo ""
   echo -e "  ${BOLD}${CYAN}Required${NC}"
@@ -214,7 +214,7 @@ if [ "${setup_new_config:-false}" = "true" ]; then
 
   cfg_userName=$(prompt_value \
     "userName" \
-    "The name displayed on your dashboard. This is your identity." \
+    "The name displayed on your Journey. This is your identity." \
     "" "true")
 
   cfg_role=$(prompt_value \
@@ -224,7 +224,7 @@ if [ "${setup_new_config:-false}" = "true" ]; then
 
   cfg_avatar=$(prompt_value \
     "avatar" \
-    "Your avatar emoji displayed on the dashboard header." \
+    "Your avatar emoji displayed on your Journey header." \
     "🧑‍💻")
 
   echo ""
@@ -233,17 +233,17 @@ if [ "${setup_new_config:-false}" = "true" ]; then
 
   cfg_port=$(prompt_value \
     "port" \
-    "The local port where your dashboard runs." \
+    "The local port where your Journey runs." \
     "3000")
 
   cfg_language=$(prompt_value \
     "language" \
-    "Dashboard display language. Available: en (English), ko (한국어)." \
+    "Journey display language. Available: en (English), ko (한국어)." \
     "en")
 
   cfg_accentColor=$(prompt_value \
     "accentColor" \
-    "Theme accent color in hex. Used for highlights across the dashboard." \
+    "Theme accent color in hex. Used for highlights across your Journey." \
     "#419BFF")
 
   echo ""
@@ -466,7 +466,7 @@ LPLIST
     mkdir -p "$SERVICE_DIR"
     cat > "$SERVICE_FILE" <<SERVICE
 [Unit]
-Description=claude-with-me dashboard
+Description=claude-with-me Journey
 After=network.target
 
 [Service]
@@ -511,7 +511,7 @@ echo -e "  ${BOLD}${GREEN}╔═════════════════
 echo -e "  ${BOLD}${GREEN}║     claude-with-me installed successfully!    ║${NC}"
 echo -e "  ${BOLD}${GREEN}╚══════════════════════════════════════════════╝${NC}"
 echo ""
-echo -e "  ${BOLD}Dashboard:${NC} http://localhost:${PORT}"
+echo -e "  ${BOLD}Journey:${NC}  http://localhost:${PORT}"
 echo -e "  ${BOLD}Source:${NC}    $SRC_DIR"
 echo -e "  ${BOLD}Config:${NC}   $SRC_DIR/config.json"
 echo -e "  ${BOLD}Logs:${NC}     $SRC_DIR/logs/"

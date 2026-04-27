@@ -1,7 +1,7 @@
 <div align="center">
   <img src="assets/icon-1024.png" alt="claude-with-me" width="120" />
   <h1>claude-with-me</h1>
-  <p>Your AI remembers. This dashboard shows the journey.</p>
+  <p>Your AI remembers. Walk through the Journey you've shared.</p>
 
 [English](README.md) | [한국어](README.ko.md)
 
@@ -9,9 +9,9 @@
 
 ![Screenshot](assets/screenshot.png)
 
-A personal dashboard that visualizes your collaboration journey with Claude.
+A personal Journey companion that captures and visualizes your collaboration with Claude.
 Built on session memories recorded by the [claude-mem](https://github.com/thedotmack) plugin,
-Claude dynamically generates your profile, relationship, and philosophy.
+Claude dynamically generates your profile, relationship, philosophy, and today's mood.
 
 For those who see Claude not as a mere tool, but as a collaborator.
 
@@ -76,11 +76,11 @@ Open `config.json` to customize:
 
 | Field | Description | Default |
 |-------|-------------|---------|
-| `userName` | Name displayed on the dashboard **(required)** | — |
+| `userName` | Name displayed on your Journey **(required)** | — |
 | `role` | Role badge **(required)** | `"Developer"` |
 | `avatar` | Avatar emoji **(required)** | `"🧑‍💻"` |
 | `port` | Server port | `3000` |
-| `language` | Dashboard language (`en` / `ko`) | `"en"` |
+| `language` | Journey language (`en` / `ko`) | `"en"` |
 | `accentColor` | Theme color (hex). Claude suggests one if omitted | `"#419BFF"` |
 | `journey.historyLimit` | History entries to display | `20` |
 | `journey.excludedProjectNames` | Project names filtered as noise | `["Workspaces", "Workspace", "observer-sessions"]` |
@@ -171,14 +171,14 @@ Same as Linux if systemd is enabled. Otherwise run `node server.js` manually.
 ## How It Works
 
 ```
-claude-mem DB ──> Express API ──> Claude CLI ──> Dashboard
+claude-mem DB ──> Express API ──> Claude CLI ──> Journey View
   (read-only)     (server.js)    (dynamic AI)    (index.html)
 ```
 
 1. **claude-mem** records Claude Code sessions into a SQLite DB
 2. **Server** reads the DB for stats and history
-3. **Claude CLI** dynamically generates profile, relationship, philosophy, and weekly summary (cached)
-4. **Dashboard** visualizes everything in a single page
+3. **Claude CLI** dynamically generates profile, relationship, philosophy, weekly summary, and today's mood (cached)
+4. **Journey View** visualizes everything in a single page
 
 The launcher automatically detects your Node.js runtime (mise, nvm, or system), so upgrading Node.js requires no reinstallation.
 
