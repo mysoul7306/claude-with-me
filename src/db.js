@@ -14,20 +14,46 @@ try {
   db = null;
 }
 
+// claude-mem v12.x introduced sdk_sessions.platform_source ('claude' | 'codex' | ...).
+// claude-with-me visualizes the journey *with Claude* — restrict every aggregate to
+// platform_source='claude' so codex/other-host sessions don't inflate stats or journey.
+const CLAUDE_PLATFORM_FILTER =
+  "EXISTS (SELECT 1 FROM sdk_sessions s WHERE s.memory_session_id = $TABLE.memory_session_id AND s.platform_source = 'claude')";
+
+const claudeOnly = (alias) => CLAUDE_PLATFORM_FILTER.replaceAll("$TABLE", alias);
+
 export function getStats() {
   if (!db) {
     return { totalSessions: 0, totalObservations: 0, daysTogether: 0, projects: [] };
   }
 
   const sessions = db
-    .prepare("SELECT COUNT(DISTINCT memory_session_id) as count FROM session_summaries")
+    .prepare(
+      `SELECT COUNT(DISTINCT memory_session_id) as count
+       FROM session_summaries ss
+       WHERE ${claudeOnly("ss")}`
+    )
     .get();
-  const observations = db.prepare("SELECT COUNT(*) as count FROM observations").get();
+  const observations = db
+    .prepare(
+      `SELECT COUNT(*) as count
+       FROM observations o
+       WHERE ${claudeOnly("o")}`
+    )
+    .get();
   const firstSession = db
-    .prepare("SELECT MIN(created_at_epoch) as first FROM session_summaries")
+    .prepare(
+      `SELECT MIN(created_at_epoch) as first
+       FROM session_summaries ss
+       WHERE ${claudeOnly("ss")}`
+    )
     .get();
   const projectRows = db
-    .prepare("SELECT DISTINCT project FROM session_summaries WHERE project IS NOT NULL")
+    .prepare(
+      `SELECT DISTINCT project
+       FROM session_summaries ss
+       WHERE project IS NOT NULL AND ${claudeOnly("ss")}`
+    )
     .all();
 
   const daysTogether = firstSession?.first
@@ -90,6 +116,7 @@ export function getJourneyHistory() {
          WHERE completed IS NOT NULL AND completed != ''
        ) latest_ss ON latest_ss.memory_session_id = sdk.memory_session_id AND latest_ss.rn = 1
        WHERE sdk.memory_session_id IS NOT NULL
+         AND sdk.platform_source = 'claude'
          AND sdk.status != 'active'
          AND sdk.started_at_epoch < ?
          AND latest_ss.completed IS NOT NULL
