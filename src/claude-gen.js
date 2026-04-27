@@ -286,7 +286,7 @@ export async function getWeeklySummary(history) {
   return { text: null, startDate, endDate };
 }
 
-// Refresh hour (system local time). 5am chosen so the dashboard greets the
+// Refresh hour (system local time). 5am chosen so the Journey greets the
 // user with a freshly generated voice + mood before the day starts, instead
 // of the midnight handoff that left a brief "loading..." gap on early reload.
 const REFRESH_HOUR = 5;
@@ -295,7 +295,7 @@ const REFRESH_HOUR = 5;
 
 // Use the N most recent journey entries instead of a fixed time window —
 // the user's activity rhythm is uneven (some days dense, others empty), and
-// "today's mood" reads strange when the dashboard says "no recent work" just
+// "today's mood" reads strange when the Journey says "no recent work" just
 // because the user hadn't merged a session in the last 24h.
 function getRecentTaskLog(history, limit = 10) {
   return history.slice(0, limit)
