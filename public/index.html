@@ -153,6 +153,71 @@
     font-size: 1.8rem;
   }
 
+  .mood-section {
+    margin-bottom: 32px;
+  }
+
+  .mood-card {
+    background: color-mix(in srgb, var(--accent-user) 6%, var(--card));
+    border: 1px solid color-mix(in srgb, var(--accent-user) 22%, transparent);
+    border-radius: 16px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .mood-emoji {
+    font-size: 2.4rem;
+    line-height: 1;
+    flex-shrink: 0;
+    filter: drop-shadow(0 0 12px color-mix(in srgb, var(--accent-user) 35%, transparent));
+  }
+
+  .mood-body {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .mood-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+
+  .mood-label {
+    color: var(--accent-user);
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  .mood-tag {
+    display: inline-block;
+    padding: 2px 10px;
+    background: color-mix(in srgb, var(--accent-user) 14%, transparent);
+    color: var(--accent-user);
+    border-radius: 10px;
+    font-size: 0.72rem;
+    font-weight: 500;
+  }
+
+  .mood-tag:empty { display: none; }
+
+  .mood-note {
+    color: #cbd5e1;
+    font-size: 0.92rem;
+    line-height: 1.55;
+  }
+
+  @media (max-width: 480px) {
+    .mood-card { padding: 16px 18px; gap: 14px; }
+    .mood-emoji { font-size: 2rem; }
+    .mood-note { font-size: 0.85rem; }
+  }
+
   .profile-section {
     margin-bottom: 56px;
   }
@@ -692,6 +757,21 @@
     <div class="date" id="header-meta">loading...</div>
   </div>
 
+  <!-- CLAUDE TODAY (mood) -->
+  <div class="mood-section" id="mood-section" style="display:none;">
+    <div class="mood-card">
+      <div class="mood-emoji" id="mood-emoji">🌙</div>
+      <div class="mood-body">
+        <div class="mood-header">
+          <span class="mood-label" id="section-claude-today">Claude Today</span>
+          <span class="mood-tag" id="mood-tag"></span>
+          <span class="section-meta" id="mood-meta"></span>
+        </div>
+        <div class="mood-note" id="mood-note"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- WHO IS ROK -->
   <div class="profile-section">
     <div class="section-title" id="section-through-my-eyes"><span class="icon">👤</span> Through My Eyes <span class="section-meta" id="profile-meta"></span></div>
@@ -818,6 +898,10 @@ async function loadConfig() {
     applyI18nSectionTitle('section-our-journey', '📅', ui.sectionOurJourney || 'Our Journey');
     applyI18nSectionTitle('section-our-milestones', '📊', ui.sectionOurMilestones || 'Our Milestones');
 
+    // mood label is plain text (not section-title HTML)
+    const moodLabelEl = document.getElementById('section-claude-today');
+    if (moodLabelEl) moodLabelEl.textContent = ui.sectionClaudeToday || 'Claude Today';
+
     return cfg;
   } catch (err) {
     console.error('Config load failed:', err);
@@ -922,14 +1006,31 @@ function setSectionMeta(metaId, data) {
 
 async function load() {
   try {
-    const [stats, journey, profile, relationship, philosophy, voice] = await Promise.all([
+    const [stats, journey, mood, profile, relationship, philosophy, voice] = await Promise.all([
       fetch('/api/stats').then(r => r.json()),
       fetch('/api/journey').then(r => r.json()),
+      fetch('/api/mood').then(r => r.json()),
       fetch('/api/profile').then(r => r.json()),
       fetch('/api/relationship').then(r => r.json()),
       fetch('/api/philosophy').then(r => r.json()),
       fetch('/api/claude-voice').then(r => r.json()),
     ]);
+
+    // Claude Today (mood) — render only when we have content
+    if (!mood.error) {
+      const m = mood.content || mood;
+      const moodSection = document.getElementById('mood-section');
+      const noteEl = document.getElementById('mood-note');
+      const emojiEl = document.getElementById('mood-emoji');
+      const tagEl = document.getElementById('mood-tag');
+      if (m && m.note) {
+        if (emojiEl) emojiEl.textContent = m.emoji || '🌙';
+        if (tagEl) tagEl.textContent = m.mood || '';
+        if (noteEl) noteEl.textContent = m.note;
+        if (moodSection) moodSection.style.display = '';
+        setSectionMeta('mood-meta', mood);
+      }
+    }
 
     // Header meta
     document.getElementById('header-meta').textContent =
@@ -1043,7 +1144,7 @@ async function load() {
     }
 
   } catch (err) {
-    console.error('Dashboard load failed:', err);
+    console.error('Journey load failed:', err);
   }
 }
 

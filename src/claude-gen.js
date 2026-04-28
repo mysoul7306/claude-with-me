@@ -286,18 +286,57 @@ export async function getWeeklySummary(history) {
   return { text: null, startDate, endDate };
 }
 
+// Refresh hour (system local time). 5am chosen so the Journey greets the
+// user with a freshly generated voice + mood before the day starts, instead
+// of the midnight handoff that left a brief "loading..." gap on early reload.
+const REFRESH_HOUR = 5;
+
+// --- Claude's Mood: honest emotional state from recent work (1-day cache) ---
+
+// Use the N most recent journey entries instead of a fixed time window —
+// the user's activity rhythm is uneven (some days dense, others empty), and
+// "today's mood" reads strange when the Journey says "no recent work" just
+// because the user hadn't merged a session in the last 24h.
+function getRecentTaskLog(history, limit = 10) {
+  return history.slice(0, limit)
+    .map((h) => `- [${h.date} · ${h.project}] ${h.title}${h.description ? ` — ${h.description}` : ""}`)
+    .join("\n");
+}
+
+export async function getMood(history) {
+  const cached = readCache("mood", ONE_DAY);
+  if (cached) return cached;
+
+  const taskLog = getRecentTaskLog(history, 24);
+  if (!taskLog) {
+    return { content: { mood: null, emoji: "🌙", note: t.ui.moodEmpty }, generatedBy: null, generatedAt: new Date().toISOString() };
+  }
+
+  const prompt = interpolate(t.prompts.mood, {
+    userName: config.userName,
+    taskLog,
+  });
+
+  const res = await callClaude(prompt);
+  if (res?.content) {
+    const parsed = parseJson(res.content);
+    if (parsed) return { ...writeCache("mood", parsed, res.generatedBy), cached: false };
+  }
+  return { error: true, message: t.ui.errorCli };
+}
+
 export function scheduleCacheInvalidation() {
   const weekDay = config.journey.weekStartDay ?? 1;
 
-  cron.schedule("0 0 * * *", () => {
-    console.log(`[${new Date().toISOString()}] Cron: daily voice refresh`);
-    invalidateCaches("voice");
+  cron.schedule(`0 ${REFRESH_HOUR} * * *`, () => {
+    console.log(`[${new Date().toISOString()}] Cron: daily voice + mood refresh`);
+    invalidateCaches("voice", "mood");
   });
 
-  cron.schedule(`0 0 * * ${weekDay}`, () => {
+  cron.schedule(`0 ${REFRESH_HOUR} * * ${weekDay}`, () => {
     console.log(`[${new Date().toISOString()}] Cron: weekly refresh`);
     invalidateCaches("profile", "relationship", "philosophy", "avatar-decor", "accent-color", "weekly-summary");
   });
 
-  console.log(`  Cron: voice daily, weekly on day ${weekDay}`);
+  console.log(`  Cron: voice + mood daily at ${REFRESH_HOUR}:00, weekly on day ${weekDay} at ${REFRESH_HOUR}:00`);
 }
