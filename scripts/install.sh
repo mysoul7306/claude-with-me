@@ -287,7 +287,8 @@ if [ "${setup_new_config:-false}" = "true" ]; then
         disableReadCache: process.argv[8] === 'true',
         excludedProjects: [],
         logPruner: { enabled: false, retentionDays: 7 }
-      }
+      },
+      logs: { monthlyTruncate: false }
     };
     fs.writeFileSync(
       process.argv[9],
