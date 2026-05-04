@@ -43,31 +43,7 @@ Open `http://localhost:3000` in your browser (port depends on your config).
 | Linux (Ubuntu 20.04+ / Debian 10+) | Supported | Native execution, systemd auto-start |
 | Windows 10+ (WSL2) | Supported | Run inside WSL2 recommended |
 
-> **Windows users:** WSL2 is recommended for `better-sqlite3` native compilation.
-> Run **all commands inside the WSL2 terminal**, not in PowerShell or CMD.
-
-<details>
-<summary><strong>Build tools for native compilation</strong></summary>
-
-**macOS:**
-```bash
-xcode-select --install
-```
-
-**Linux / WSL2 (Ubuntu/Debian):**
-```bash
-sudo apt update && sudo apt install -y build-essential python3 make g++
-```
-
-**Windows (WSL2 setup):**
-```powershell
-wsl --install
-```
-Then follow the Linux instructions inside WSL2.
-
-> **Tip:** Always clone to the Linux filesystem (`~/`), not under `/mnt/c/`.
-
-</details>
+> **Windows users:** Run **all commands inside the WSL2 terminal**, not in PowerShell or CMD.
 
 <details>
 <summary><strong>Configuration reference</strong></summary>

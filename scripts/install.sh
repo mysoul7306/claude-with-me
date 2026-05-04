@@ -223,10 +223,8 @@ if [ "${setup_new_config:-false}" = "true" ]; then
   echo -e "  ${BOLD}${CYAN}Claude Integration${NC}"
   echo -e "  ${DIM}──────────────────────────────────────────────${NC}"
 
-  cfg_model=$(prompt_value \
-    "claude.model" \
-    "Claude model for dynamic content. opus = best quality, sonnet = faster & cheaper." \
-    "opus")
+  # modelPriority is hardcoded to ["sonnet", "opus"] (Pro tier-friendly default).
+  # Edit config.json after install if you want a different priority.
 
   # Auto-detect Claude CLI
   CLAUDE_CLI=""
@@ -276,19 +274,27 @@ if [ "${setup_new_config:-false}" = "true" ]; then
       port: parseInt(process.argv[4], 10),
       accentColor: process.argv[5],
       language: process.argv[6],
-      journey: { todoLimit: 10, historyLimit: 20 },
-      claude: { model: process.argv[7], cliPath: process.argv[8] },
+      journey: {
+        historyLimit: 20,
+        excludedProjectNames: ['Workspaces', 'Workspace', 'observer-sessions'],
+        weekStartDay: 1
+      },
+      claude: {
+        modelPriority: ['sonnet', 'opus'],
+        cliPath: process.argv[7]
+      },
       claudeMem: {
-        disableReadCache: process.argv[9] === 'true',
-        excludedProjects: []
+        disableReadCache: process.argv[8] === 'true',
+        excludedProjects: [],
+        logPruner: { enabled: false, retentionDays: 7 }
       }
     };
     fs.writeFileSync(
-      process.argv[10],
+      process.argv[9],
       JSON.stringify(config, null, 2) + '\n'
     );
   " "$cfg_userName" "$cfg_role" "$cfg_avatar" "$cfg_port" \
-    "$cfg_accentColor" "$cfg_language" "$cfg_model" "$cfg_cliPath" \
+    "$cfg_accentColor" "$cfg_language" "$cfg_cliPath" \
     "$cfg_disableReadCache" "$SRC_DIR/config.json"
 
   echo ""

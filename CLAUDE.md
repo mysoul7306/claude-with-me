@@ -33,7 +33,7 @@ public/
 i18n/
   en.json, ko.json     # Translation files
 scripts/
-  install.sh           # Install (npm install + LaunchAgent/systemd registration)
+  install.sh           # Install (bun install + LaunchAgent/systemd registration)
   uninstall.sh         # Uninstall
   launcher.sh          # Bun runtime detection wrapper
 ```
