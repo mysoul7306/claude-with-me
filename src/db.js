@@ -1,4 +1,4 @@
-import Database from "better-sqlite3";
+import { Database } from "bun:sqlite";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { config } from "./config.js";
@@ -7,8 +7,7 @@ const DB_PATH = join(homedir(), ".claude-mem", "claude-mem.db");
 
 let db;
 try {
-  db = new Database(DB_PATH, { readonly: true, fileMustExist: true });
-  db.pragma("journal_mode = wal");
+  db = new Database(DB_PATH, { readonly: true, create: false });
 } catch (err) {
   console.warn(`[db] claude-mem.db not found at ${DB_PATH}:`, err.message);
   db = null;

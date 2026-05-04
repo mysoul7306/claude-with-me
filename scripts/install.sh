@@ -65,107 +65,80 @@ echo -e "  ${BOLD}${CYAN}╔═════════════════�
 echo -e "  ${BOLD}${CYAN}║         claude-with-me installer             ║${NC}"
 echo -e "  ${BOLD}${CYAN}╚══════════════════════════════════════════════╝${NC}"
 
-# ── Step 1: Detect Node.js ────────────────────────────────────────────────────
+# ── Step 1: Detect Bun ────────────────────────────────────────────────────────
 
-header "Step 1/4 — Detecting Node.js"
+header "Step 1/4 — Detecting Bun"
 
-NODE_CMD=""
-NODE_SOURCE=""
+BUN_CMD=""
+BUN_SOURCE=""
 
 # 1) mise
-if [ -z "$NODE_CMD" ]; then
+if [ -z "$BUN_CMD" ]; then
   for mise_bin in "$HOME/.local/bin/mise" "/opt/homebrew/bin/mise"; do
     if [ -x "$mise_bin" ]; then
-      if actual=$("$mise_bin" which node 2>/dev/null); then
-        NODE_CMD="$actual"
-        NODE_SOURCE="mise ($mise_bin)"
+      if actual=$("$mise_bin" which bun 2>/dev/null); then
+        BUN_CMD="$actual"
+        BUN_SOURCE="mise ($mise_bin)"
       fi
       break
     fi
   done
 fi
 
-# 2) nvm
-if [ -z "$NODE_CMD" ] && [ -s "$HOME/.nvm/nvm.sh" ]; then
-  # shellcheck disable=SC1091
-  . "$HOME/.nvm/nvm.sh"
-  if command -v node &>/dev/null; then
-    NODE_CMD="$(command -v node)"
-    NODE_SOURCE="nvm"
-  fi
-fi
-
-# 3) System node (common paths)
-if [ -z "$NODE_CMD" ]; then
-  for p in /usr/local/bin/node /usr/bin/node /opt/homebrew/bin/node; do
+# 2) System bun (common paths)
+if [ -z "$BUN_CMD" ]; then
+  for p in "$HOME/.bun/bin/bun" /usr/local/bin/bun /opt/homebrew/bin/bun /usr/bin/bun; do
     if [ -x "$p" ]; then
-      NODE_CMD="$p"
-      NODE_SOURCE="system ($p)"
+      BUN_CMD="$p"
+      BUN_SOURCE="system ($p)"
       break
     fi
   done
 fi
 
-if [ -z "$NODE_CMD" ]; then
-  error "Node.js not found!"
+if [ -z "$BUN_CMD" ]; then
+  error "Bun not found!"
   echo ""
-  echo "  Please install Node.js 20+ using one of the following:"
+  echo "  Please install Bun 1.1+ using one of the following:"
   echo ""
-  echo "    mise:   mise use --global node@lts"
-  echo "    nvm:    nvm install --lts"
-  echo "    brew:   brew install node"
-  echo "    manual: https://nodejs.org/"
+  echo "    mise:   mise use --global bun@latest"
+  echo "    curl:   curl -fsSL https://bun.sh/install | bash"
+  echo "    brew:   brew install bun"
   echo ""
   exit 1
 fi
 
-NODE_VERSION=$("$NODE_CMD" -v)
-NODE_MAJOR=$(echo "$NODE_VERSION" | sed 's/v//' | cut -d. -f1)
+BUN_VERSION=$("$BUN_CMD" -v)
+BUN_MAJOR=$(echo "$BUN_VERSION" | cut -d. -f1)
+BUN_MINOR=$(echo "$BUN_VERSION" | cut -d. -f2)
 
-if [ "$NODE_MAJOR" -lt 20 ]; then
-  error "Node.js $NODE_VERSION found, but version 20 or higher is required."
+if [ "$BUN_MAJOR" -lt 1 ] || { [ "$BUN_MAJOR" -eq 1 ] && [ "$BUN_MINOR" -lt 1 ]; }; then
+  error "Bun $BUN_VERSION found, but version 1.1 or higher is required."
   echo ""
-  echo "  Current:  $NODE_CMD ($NODE_VERSION)"
-  echo "  Required: v20.0.0+"
+  echo "  Current:  $BUN_CMD ($BUN_VERSION)"
+  echo "  Required: 1.1.0+"
   echo ""
   echo "  Upgrade with:"
-  echo "    mise: mise use --global node@lts"
-  echo "    nvm:  nvm install --lts"
+  echo "    mise: mise use --global bun@latest"
+  echo "    bun:  bun upgrade"
   echo ""
   exit 1
 fi
 
 echo ""
-info "Found Node.js ${BOLD}$NODE_VERSION${NC} via $NODE_SOURCE"
-info "Path: $NODE_CMD"
+info "Found Bun ${BOLD}$BUN_VERSION${NC} via $BUN_SOURCE"
+info "Path: $BUN_CMD"
 echo ""
 
-if ! prompt_yn "Use this Node.js?"; then
+if ! prompt_yn "Use this Bun?"; then
   echo ""
-  info "Installation cancelled. Please configure your preferred Node.js and try again."
+  info "Installation cancelled. Please configure your preferred Bun and try again."
   exit 0
 fi
 
-# Add node's bin directory to PATH so npm/npx can find node
-NODE_BIN_DIR="$(dirname "$NODE_CMD")"
-export PATH="$NODE_BIN_DIR:$PATH"
-
-# Detect npm from the same environment
-NPM_CMD=""
-if [ -x "$NODE_BIN_DIR/npm" ]; then
-  NPM_CMD="$NODE_BIN_DIR/npm"
-elif command -v npm &>/dev/null; then
-  NPM_CMD="$(command -v npm)"
-fi
-
-if [ -z "$NPM_CMD" ]; then
-  error "npm not found alongside Node.js."
-  echo "  Expected at: $NODE_BIN_DIR/npm"
-  exit 1
-fi
-
-NPM_VERSION=$("$NPM_CMD" -v)
-success "npm $NPM_VERSION ready."
+# Add bun's bin directory to PATH
+BUN_BIN_DIR="$(dirname "$BUN_CMD")"
+export PATH="$BUN_BIN_DIR:$PATH"
 
 # ── Step 2: Install dependencies ──────────────────────────────────────────────
 
@@ -174,15 +147,15 @@ header "Step 2/4 — Installing dependencies"
 if [ -d "$SRC_DIR/node_modules" ]; then
   info "node_modules already exists."
   echo ""
-  if prompt_yn "Rebuild native addons for current Node.js?"; then
-    (cd "$SRC_DIR" && "$NPM_CMD" rebuild 2>&1 | tail -5)
-    success "Native addons rebuilt."
+  if prompt_yn "Re-run bun install to sync with bun.lock?"; then
+    (cd "$SRC_DIR" && "$BUN_CMD" install 2>&1 | tail -5)
+    success "Dependencies synced."
   else
-    info "Skipped rebuild."
+    info "Skipped install."
   fi
 else
-  info "Running npm install..."
-  (cd "$SRC_DIR" && "$NPM_CMD" install 2>&1 | tail -5)
+  info "Running bun install..."
+  (cd "$SRC_DIR" && "$BUN_CMD" install 2>&1 | tail -5)
   success "Dependencies installed."
 fi
 
@@ -293,8 +266,8 @@ if [ "${setup_new_config:-false}" = "true" ]; then
   info "excludedProjects can be configured later in config.json."
   info "Add directory paths (glob patterns supported) to exclude from tracking."
 
-  # Generate config.json via node for safe JSON encoding
-  "$NODE_CMD" -e "
+  # Generate config.json via bun for safe JSON encoding
+  "$BUN_CMD" -e "
     const fs = require('fs');
     const config = {
       userName: process.argv[1],
@@ -323,7 +296,7 @@ if [ "${setup_new_config:-false}" = "true" ]; then
 fi
 
 # Read port from config for final message
-PORT=$("$NODE_CMD" -e "
+PORT=$("$BUN_CMD" -e "
   const c = JSON.parse(require('fs').readFileSync('$SRC_DIR/config.json','utf8'));
   console.log(c.port || 3000);
 " 2>/dev/null || echo "3000")
@@ -500,7 +473,7 @@ SERVICE
 
   *)
     warn "Unsupported OS: $OS"
-    info "You can run manually: node server.js"
+    info "You can run manually: bun server.js"
     ;;
 esac
 
@@ -516,6 +489,6 @@ echo -e "  ${BOLD}Source:${NC}    $SRC_DIR"
 echo -e "  ${BOLD}Config:${NC}   $SRC_DIR/config.json"
 echo -e "  ${BOLD}Logs:${NC}     $SRC_DIR/logs/"
 echo ""
-echo -e "  ${DIM}Node.js updates are handled automatically via launcher.sh.${NC}"
-echo -e "  ${DIM}No reinstall needed when you upgrade Node.js.${NC}"
+echo -e "  ${DIM}Bun updates are handled automatically via launcher.sh.${NC}"
+echo -e "  ${DIM}No reinstall needed when you upgrade Bun.${NC}"
 echo ""
