@@ -116,7 +116,6 @@ export function getJourneyHistory() {
        ) latest_ss ON latest_ss.memory_session_id = sdk.memory_session_id AND latest_ss.rn = 1
        WHERE sdk.memory_session_id IS NOT NULL
          AND sdk.platform_source = 'claude'
-         AND sdk.status != 'active'
          AND sdk.started_at_epoch < ?
          AND latest_ss.completed IS NOT NULL
          AND ${excluded.sql}
