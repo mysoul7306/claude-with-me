@@ -10,7 +10,7 @@ import {
   getProjectEmojis, scheduleCacheInvalidation,
 } from "./src/claude-gen.js";
 import { patchClaudeMemHooks, syncExcludedProjects } from "./src/hooks-patcher.js";
-import { registerLogPrunerJobs } from "./src/log-pruner.js";
+import { registerLogPrunerJobs, registerProjectLogRotation } from "./src/log-pruner.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = config.port;
@@ -69,6 +69,7 @@ app.listen(PORT, () => {
 
   scheduleCacheInvalidation();
   registerLogPrunerJobs();
+  registerProjectLogRotation();
 
   const hookResult = patchClaudeMemHooks(config.claudeMem);
   console.log(`  [hooks] ${hookResult.patched ? hookResult.message : "No patch needed: " + hookResult.message}`);

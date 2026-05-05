@@ -33,6 +33,11 @@ const DEFAULTS = {
       retentionDays: 7,
     },
   },
+  logs: {
+    // Monthly cron (1st of every month at 5am) truncates logs/*.log in place.
+    // Safe with LaunchAgent — its open fd survives ftruncate, unlike rename.
+    monthlyTruncate: false,
+  },
 };
 
 function loadConfig() {
@@ -84,6 +89,9 @@ function loadConfig() {
           ? Number(raw.claudeMem.logPruner.retentionDays)
           : DEFAULTS.claudeMem.logPruner.retentionDays,
       },
+    },
+    logs: {
+      monthlyTruncate: raw.logs?.monthlyTruncate ?? DEFAULTS.logs.monthlyTruncate,
     },
   };
 }

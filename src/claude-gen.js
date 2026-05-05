@@ -262,8 +262,10 @@ export async function getWeeklySummary(history) {
     return { text: null, startDate, endDate };
   }
 
+  // Guard against stale-range cache: TTL alone lets last-last-week's summary
+  // bleed into the new week if the cron hasn't fired yet.
   const cached = readCache("weekly-summary", SEVEN_DAYS);
-  if (cached?.content) {
+  if (cached?.content?.startDate === startDate) {
     return { ...cached.content, generatedBy: cached.generatedBy, generatedAt: cached.generatedAt };
   }
 

@@ -5,7 +5,7 @@
 **claude-with-me** — A personal Journey view that captures and visualizes your collaboration with Claude Code.
 Reads session data recorded by the [claude-mem](https://github.com/thedotmack) plugin, and uses Claude CLI to dynamically generate profile, relationship, philosophy, and today's mood.
 
-- **Stack:** Node.js (ESM), Express 5, better-sqlite3, vanilla HTML/JS
+- **Stack:** Bun (ESM), Express 5, `bun:sqlite`, vanilla HTML/JS
 - **Entry:** `server.js` — Express server + API routes
 - **Port:** Configured via `config.json` `port` field (default 3000)
 - **License:** Apache-2.0
@@ -33,16 +33,16 @@ public/
 i18n/
   en.json, ko.json     # Translation files
 scripts/
-  install.sh           # Install (npm install + LaunchAgent/systemd registration)
+  install.sh           # Install (bun install + LaunchAgent/systemd registration)
   uninstall.sh         # Uninstall
-  launcher.sh          # Node.js runtime detection wrapper
+  launcher.sh          # Bun runtime detection wrapper
 ```
 
 ## Development
 
 ```bash
-npm run dev            # node --watch server.js
-npm start              # node server.js (production)
+bun run dev            # bun --hot server.js
+bun start              # bun run server.js (production)
 ```
 
 ### Configuration
