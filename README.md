@@ -1,7 +1,7 @@
 <div align="center">
   <img src="assets/icon-1024.png" alt="claude-with-me" width="120" />
   <h1>claude-with-me</h1>
-  <p>Your AI remembers. This dashboard shows the journey.</p>
+  <p>Your AI remembers. Walk through the Journey you've shared.</p>
 
 [English](README.md) | [한국어](README.ko.md)
 
@@ -9,9 +9,9 @@
 
 ![Screenshot](assets/screenshot.png)
 
-A personal dashboard that visualizes your collaboration journey with Claude.
+A personal Journey companion that captures and visualizes your collaboration with Claude.
 Built on session memories recorded by the [claude-mem](https://github.com/thedotmack) plugin,
-Claude dynamically generates your profile, relationship, and philosophy.
+Claude dynamically generates your profile, relationship, philosophy, and today's mood.
 
 For those who see Claude not as a mere tool, but as a collaborator.
 
@@ -19,7 +19,7 @@ This project was built entirely with [Claude Code](https://claude.ai/code).
 
 ## Quick Start
 
-**Requirements:** Node.js 20+, [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) signed in with a **Claude Pro/Max subscription or Anthropic API key** (free tier not sufficient), [claude-mem](https://github.com/thedotmack) plugin (used at least once)
+**Requirements:** [Bun](https://bun.sh) 1.1+, [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) signed in with a **Claude Pro/Max subscription or Anthropic API key** (free tier not sufficient), [claude-mem](https://github.com/thedotmack) plugin (used at least once)
 
 ```bash
 git clone https://github.com/mysoul7306/claude-with-me.git
@@ -28,8 +28,8 @@ cd claude-with-me
 ```
 
 The installer will:
-1. Detect your Node.js (mise, nvm, or system)
-2. Install dependencies (`npm install`)
+1. Detect your Bun (mise or system)
+2. Install dependencies (`bun install`)
 3. Walk you through configuration (name, role, avatar, etc.)
 4. Register the service for auto-start
 
@@ -43,31 +43,7 @@ Open `http://localhost:3000` in your browser (port depends on your config).
 | Linux (Ubuntu 20.04+ / Debian 10+) | Supported | Native execution, systemd auto-start |
 | Windows 10+ (WSL2) | Supported | Run inside WSL2 recommended |
 
-> **Windows users:** WSL2 is recommended for `better-sqlite3` native compilation.
-> Run **all commands inside the WSL2 terminal**, not in PowerShell or CMD.
-
-<details>
-<summary><strong>Build tools for native compilation</strong></summary>
-
-**macOS:**
-```bash
-xcode-select --install
-```
-
-**Linux / WSL2 (Ubuntu/Debian):**
-```bash
-sudo apt update && sudo apt install -y build-essential python3 make g++
-```
-
-**Windows (WSL2 setup):**
-```powershell
-wsl --install
-```
-Then follow the Linux instructions inside WSL2.
-
-> **Tip:** Always clone to the Linux filesystem (`~/`), not under `/mnt/c/`.
-
-</details>
+> **Windows users:** Run **all commands inside the WSL2 terminal**, not in PowerShell or CMD.
 
 <details>
 <summary><strong>Configuration reference</strong></summary>
@@ -76,11 +52,11 @@ Open `config.json` to customize:
 
 | Field | Description | Default |
 |-------|-------------|---------|
-| `userName` | Name displayed on the dashboard **(required)** | — |
+| `userName` | Name displayed on your Journey **(required)** | — |
 | `role` | Role badge **(required)** | `"Developer"` |
 | `avatar` | Avatar emoji **(required)** | `"🧑‍💻"` |
 | `port` | Server port | `3000` |
-| `language` | Dashboard language (`en` / `ko`) | `"en"` |
+| `language` | Journey language (`en` / `ko`) | `"en"` |
 | `accentColor` | Theme color (hex). Claude suggests one if omitted | `"#419BFF"` |
 | `journey.historyLimit` | History entries to display | `20` |
 | `journey.excludedProjectNames` | Project names filtered as noise | `["Workspaces", "Workspace", "observer-sessions"]` |
@@ -162,7 +138,7 @@ When enabled, runs on server startup and every week at 05:00 on the day set by `
 
 ### Windows (WSL2 + systemd)
 
-Same as Linux if systemd is enabled. Otherwise run `node server.js` manually.
+Same as Linux if systemd is enabled. Otherwise run `bun server.js` manually.
 
 > **Tip:** Enable systemd in WSL2: add `[boot] systemd=true` to `/etc/wsl.conf`, then `wsl --shutdown`.
 
@@ -171,16 +147,16 @@ Same as Linux if systemd is enabled. Otherwise run `node server.js` manually.
 ## How It Works
 
 ```
-claude-mem DB ──> Express API ──> Claude CLI ──> Dashboard
+claude-mem DB ──> Express API ──> Claude CLI ──> Journey View
   (read-only)     (server.js)    (dynamic AI)    (index.html)
 ```
 
 1. **claude-mem** records Claude Code sessions into a SQLite DB
 2. **Server** reads the DB for stats and history
-3. **Claude CLI** dynamically generates profile, relationship, philosophy, and weekly summary (cached)
-4. **Dashboard** visualizes everything in a single page
+3. **Claude CLI** dynamically generates profile, relationship, philosophy, weekly summary, and today's mood (cached)
+4. **Journey View** visualizes everything in a single page
 
-The launcher automatically detects your Node.js runtime (mise, nvm, or system), so upgrading Node.js requires no reinstallation.
+The launcher automatically detects your Bun runtime (mise or system), so upgrading Bun requires no reinstallation.
 
 ## Estimated Cost
 
@@ -221,7 +197,6 @@ If you're on Max (or running via API) and prefer premium quality up front, reord
 |---------|----------|
 | `claude: command not found` | Verify Claude Code CLI is installed and in your PATH |
 | `claude-mem.db` not found | Ensure claude-mem plugin is installed and used at least once |
-| `better-sqlite3` build failure | Install build tools (see above), then `npm rebuild better-sqlite3` |
 | systemd unavailable in WSL2 | Add `[boot] systemd=true` to `/etc/wsl.conf` |
 | Cannot access localhost from Windows | Run `hostname -I` in WSL2, use that IP |
 | "File unchanged since last read" | Set `claudeMem.disableReadCache` to `true` in config.json |

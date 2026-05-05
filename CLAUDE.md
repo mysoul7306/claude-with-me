@@ -2,10 +2,10 @@
 
 ## Project Overview
 
-**claude-with-me** — A personal dashboard that visualizes your collaboration journey with Claude Code.
-Reads session data recorded by the [claude-mem](https://github.com/thedotmack) plugin, and uses Claude CLI to dynamically generate profile, relationship, and philosophy.
+**claude-with-me** — A personal Journey view that captures and visualizes your collaboration with Claude Code.
+Reads session data recorded by the [claude-mem](https://github.com/thedotmack) plugin, and uses Claude CLI to dynamically generate profile, relationship, philosophy, and today's mood.
 
-- **Stack:** Node.js (ESM), Express 5, better-sqlite3, vanilla HTML/JS
+- **Stack:** Bun (ESM), Express 5, `bun:sqlite`, vanilla HTML/JS
 - **Entry:** `server.js` — Express server + API routes
 - **Port:** Configured via `config.json` `port` field (default 3000)
 - **License:** Apache-2.0
@@ -13,7 +13,7 @@ Reads session data recorded by the [claude-mem](https://github.com/thedotmack) p
 ## Architecture
 
 ```
-claude-mem DB ──> Express API ──> Claude CLI ──> Dashboard
+claude-mem DB ──> Express API ──> Claude CLI ──> Journey View
   (read-only)     (server.js)    (dynamic AI)    (public/index.html)
 ```
 
@@ -29,20 +29,20 @@ src/
   i18n.js              # i18n support (en/ko)
   log-pruner.js        # Opt-in weekly cleanup of ~/.claude-mem/logs/*.log
 public/
-  index.html           # SPA dashboard (vanilla JS)
+  index.html           # SPA Journey view (vanilla JS)
 i18n/
   en.json, ko.json     # Translation files
 scripts/
-  install.sh           # Install (npm install + LaunchAgent/systemd registration)
+  install.sh           # Install (bun install + LaunchAgent/systemd registration)
   uninstall.sh         # Uninstall
-  launcher.sh          # Node.js runtime detection wrapper
+  launcher.sh          # Bun runtime detection wrapper
 ```
 
 ## Development
 
 ```bash
-npm run dev            # node --watch server.js
-npm start              # node server.js (production)
+bun run dev            # bun --hot server.js
+bun start              # bun run server.js (production)
 ```
 
 ### Configuration
@@ -50,9 +50,9 @@ npm start              # node server.js (production)
 `config.json` (gitignored) — see `config.json.example` for reference.
 
 Key settings:
-- `userName`, `role`, `avatar` — Dashboard display info
+- `userName`, `role`, `avatar` — Journey display info
 - `accentColor` — User accent color applied to avatar, role label, journey line
-- `language` — Dashboard language (`en` / `ko`)
+- `language` — Journey language (`en` / `ko`)
 - `claude.modelPriority` — Models tried in order; fallback only on operational failure (`["sonnet", "opus"]`, sonnet-first for Pro tier comfort)
 - `claudeMem.disableReadCache` — Disable file-read caching hook
 - `claudeMem.excludedProjects` — Paths to exclude from tracking

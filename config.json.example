@@ -21,5 +21,8 @@
       "enabled": false,
       "retentionDays": 7
     }
+  },
+  "logs": {
+    "monthlyTruncate": false
   }
 }
