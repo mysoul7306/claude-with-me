@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { config } from "./src/config.js";
 import { t } from "./src/i18n.js";
-import { getStats, getJourneyHistory } from "./src/db.js";
+import { getStats, getJourneyHistory, getLastWeekHistory } from "./src/db.js";
 import {
   getProfile, getRelationship, getPhilosophy, getVoice,
   getAvatarDecor, getAccentColor, getWeeklySummary, getMood,
@@ -35,6 +35,11 @@ app.get("/api/stats", (_req, res) => res.json(getStats()));
 app.get("/api/journey", async (_req, res) => {
   const history = getJourneyHistory();
 
+  // Last-week history is queried separately so historyLimit can't silently
+  // truncate it when recent days are busy (e.g. 30-limit with 38 entries in
+  // the last 3 days hides 5/4-5/10 entirely).
+  const weeklySummary = await getWeeklySummary();
+
   const allProjects = [...new Set(history.map((h) => h.project))];
   const emojis = await getProjectEmojis(allProjects);
 
@@ -43,7 +48,6 @@ app.get("/api/journey", async (_req, res) => {
     projectEmoji: emojis[h.project] || "",
   }));
 
-  const weeklySummary = await getWeeklySummary(historyWithEmoji);
   res.json({ history: historyWithEmoji, weeklySummary });
 });
 
