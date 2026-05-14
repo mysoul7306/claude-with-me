@@ -5,6 +5,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { config } from "./config.js";
 import { t, interpolate } from "./i18n.js";
+import { getLastWeekHistory } from "./db.js";
 import cron from "node-cron";
 
 const execAsync = promisify(exec);
@@ -254,9 +255,12 @@ export async function getAccentColor() {
 
 // --- Weekly Summary: AI-generated week recap (7-day cache) ---
 
-export async function getWeeklySummary(history) {
+export async function getWeeklySummary() {
   const { startDate, endDate } = getLastWeekRange();
-  const lastWeek = history.filter((h) => h.date >= startDate && h.date <= endDate);
+  // Pull last-week sessions straight from the DB instead of filtering the
+  // recent-N timeline — the timeline is capped by historyLimit and silently
+  // hides last-week entries when recent days are busy.
+  const lastWeek = getLastWeekHistory(startDate, endDate);
 
   if (lastWeek.length === 0) {
     return { text: null, startDate, endDate };

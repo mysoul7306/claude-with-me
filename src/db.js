@@ -79,54 +79,42 @@ function buildExcludedProjectsClause(columnExpr) {
   };
 }
 
-export function getJourneyHistory() {
-  if (!db) return [];
+// Shared session SELECT used by both the recent-N timeline and the date-range
+// last-week query. Keeping the column list + JOINs identical means downstream
+// shaping (typesMap, mapping) stays one code path.
+const SESSION_SELECT = `
+  SELECT
+    sdk.memory_session_id,
+    sdk.project,
+    sdk.custom_title,
+    sdk.started_at,
+    sdk.started_at_epoch,
+    first_ss.request,
+    first_ss.investigated,
+    latest_ss.completed
+  FROM sdk_sessions sdk
+  LEFT JOIN (
+    SELECT memory_session_id, request, investigated,
+           ROW_NUMBER() OVER (
+             PARTITION BY memory_session_id
+             ORDER BY created_at_epoch ASC
+           ) as rn
+    FROM session_summaries
+  ) first_ss ON first_ss.memory_session_id = sdk.memory_session_id AND first_ss.rn = 1
+  LEFT JOIN (
+    SELECT memory_session_id, completed,
+           ROW_NUMBER() OVER (
+             PARTITION BY memory_session_id
+             ORDER BY created_at_epoch DESC
+           ) as rn
+    FROM session_summaries
+    WHERE completed IS NOT NULL AND completed != ''
+  ) latest_ss ON latest_ss.memory_session_id = sdk.memory_session_id AND latest_ss.rn = 1
+`;
 
-  const excluded = buildExcludedProjectsClause("sdk.project");
-  const recentCutoff = Date.now() - 5 * 60 * 1000;
-
-  const rows = db
-    .prepare(
-      `SELECT
-         sdk.memory_session_id,
-         sdk.project,
-         sdk.custom_title,
-         sdk.started_at,
-         sdk.started_at_epoch,
-         first_ss.request,
-         first_ss.investigated,
-         latest_ss.completed
-       FROM sdk_sessions sdk
-       LEFT JOIN (
-         SELECT memory_session_id, request, investigated,
-                ROW_NUMBER() OVER (
-                  PARTITION BY memory_session_id
-                  ORDER BY created_at_epoch ASC
-                ) as rn
-         FROM session_summaries
-       ) first_ss ON first_ss.memory_session_id = sdk.memory_session_id AND first_ss.rn = 1
-       LEFT JOIN (
-         SELECT memory_session_id, completed,
-                ROW_NUMBER() OVER (
-                  PARTITION BY memory_session_id
-                  ORDER BY created_at_epoch DESC
-                ) as rn
-         FROM session_summaries
-         WHERE completed IS NOT NULL AND completed != ''
-       ) latest_ss ON latest_ss.memory_session_id = sdk.memory_session_id AND latest_ss.rn = 1
-       WHERE sdk.memory_session_id IS NOT NULL
-         AND sdk.platform_source = 'claude'
-         AND sdk.started_at_epoch < ?
-         AND latest_ss.completed IS NOT NULL
-         AND ${excluded.sql}
-       ORDER BY sdk.started_at_epoch DESC
-       LIMIT ${config.journey.historyLimit}`
-    )
-    .all(recentCutoff, ...excluded.params);
-
+function attachTypesAndShape(rows) {
   if (rows.length === 0) return [];
 
-  // Fetch observation types for matched sessions
   const sessionIds = rows.map((r) => r.memory_session_id);
   const obsPlaceholders = sessionIds.map(() => "?").join(",");
   const obsRows = db
@@ -151,5 +139,50 @@ export function getJourneyHistory() {
     description: r.completed || "",
     types: typesMap.get(r.memory_session_id) ?? [],
   }));
+}
+
+export function getJourneyHistory() {
+  if (!db) return [];
+
+  const excluded = buildExcludedProjectsClause("sdk.project");
+  const recentCutoff = Date.now() - 5 * 60 * 1000;
+
+  const rows = db
+    .prepare(
+      `${SESSION_SELECT}
+       WHERE sdk.memory_session_id IS NOT NULL
+         AND sdk.platform_source = 'claude'
+         AND sdk.started_at_epoch < ?
+         AND latest_ss.completed IS NOT NULL
+         AND ${excluded.sql}
+       ORDER BY sdk.started_at_epoch DESC
+       LIMIT ${config.journey.historyLimit}`
+    )
+    .all(recentCutoff, ...excluded.params);
+
+  return attachTypesAndShape(rows);
+}
+
+// Pulls every claude session inside [startDate, endDate] (inclusive, YYYY-MM-DD,
+// local-date semantics matching sdk.started_at). Decoupled from historyLimit so
+// the weekly summary doesn't get silently truncated when recent days are busy.
+export function getLastWeekHistory(startDate, endDate) {
+  if (!db) return [];
+
+  const excluded = buildExcludedProjectsClause("sdk.project");
+
+  const rows = db
+    .prepare(
+      `${SESSION_SELECT}
+       WHERE sdk.memory_session_id IS NOT NULL
+         AND sdk.platform_source = 'claude'
+         AND latest_ss.completed IS NOT NULL
+         AND DATE(sdk.started_at) BETWEEN ? AND ?
+         AND ${excluded.sql}
+       ORDER BY sdk.started_at_epoch DESC`
+    )
+    .all(startDate, endDate, ...excluded.params);
+
+  return attachTypesAndShape(rows);
 }
 
