@@ -1222,6 +1222,9 @@ function renderJourney(journey) {
       const modelBadge = ws.generatedBy
         ? `<span style="display:inline-block;padding:2px 8px;background:color-mix(in srgb, var(--accent-user) 10%, transparent);color:var(--accent-user);border-radius:10px;font-size:0.65rem;">✨ ${ws.generatedBy}</span>`
         : '';
+      const staleBadge = ws.stale
+        ? `<span title="Claude CLI 호출 실패로 이전 주 요약을 보여주는 중" style="display:inline-block;margin-left:6px;padding:2px 8px;background:color-mix(in srgb, #f59e0b 14%, transparent);color:#f59e0b;border-radius:10px;font-size:0.65rem;">📦 stale</span>`
+        : '';
       const projEmojiMap = {};
       (journey.history || []).forEach(h => { if (h.projectEmoji && h.project) projEmojiMap[h.project] = h.projectEmoji; });
       const weeklyBody = ws.text
@@ -1236,7 +1239,7 @@ function renderJourney(journey) {
             <h3 style="color:var(--accent-user);font-size:1.1rem;margin:0;">📅 ${weeklyTitle}</h3>
             <div style="color:#94a3b8;font-size:0.8rem;margin-top:2px;">${rangeStart} – ${rangeEnd}</div>
           </div>
-          ${modelBadge}
+          <div>${modelBadge}${staleBadge}</div>
         </div>
         <div style="color:#cbd5e1;font-size:0.9rem;line-height:1.7;white-space:pre-line;">${weeklyBody}</div>
       </div>`;

@@ -56,7 +56,7 @@ app.get("/api/mood", async (_req, res) => res.json(await getMood(getJourneyHisto
 app.get("/api/profile", async (_req, res) => res.json(await getProfile(getStats())));
 app.get("/api/relationship", async (_req, res) => res.json(await getRelationship(getStats())));
 app.get("/api/philosophy", async (_req, res) => res.json(await getPhilosophy(getStats())));
-app.get("/api/claude-voice", async (_req, res) => res.json(await getVoice(getStats())));
+app.get("/api/claude-voice", async (_req, res) => res.json(await getVoice(getStats(), getJourneyHistory())));
 
 app.get("/api/avatar-decor", async (_req, res) => {
   const result = await getAvatarDecor();
