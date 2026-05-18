@@ -2,12 +2,12 @@
   "prompts": {
     "profile": "{{userName}}의 프로필을 JSON으로 작성해줘. 이 사용자의 역할은 \"{{role}}\"이야.\n형식: [{ \"icon\": \"이모지1개\", \"title\": \"짧은 제목\", \"desc\": \"1~2문장\" }, ...] (5개)\ndesc 문체: 명사형/체언 종결 (\"~하는 사람.\", \"~을 추구.\", \"~이 기본 체질.\")\n서술형 종결(\"~한다.\", \"~이다.\") 금지.\n참고 데이터: {{daysTogether}}일, {{totalSessions}}세션\nJSON 배열만 출력.",
     "relationship": "{{userName}}와 Claude의 관계를 JSON으로 정리해줘.\n형식: { \"userToClaude\": \"역할 (중간점 · 구분)\", \"claudeToUser\": \"역할 (같은 형식)\", \"bond\": \"관계 본질 한마디 (통계 넣지 마)\", \"keywords\": [\"맥락 있는 짧은 문구\", ...최대15개] }\nkeywords 규칙: 한두 단어 금지. \"신뢰\" 같은 단어 하나가 아니라 \"매 세션 이어지는 신뢰\"처럼 4~8글자의 문맥이 담긴 표현으로.\nJSON만 출력.",
-    "philosophy": "이번 주 {{userName}}와의 협업 철학을 JSON으로 표현해줘.\n형식: { \"quote\": \"인용구 3~4줄. 가장 중요한 한 줄은 <span>태그</span>로 감싸줘.\", \"explanation\": \"부연 설명 2~3줄\" }\n진심 담긴 표현으로. JSON만 출력.",
-    "voice": "{{userName}}에게 따뜻하고 솔직한 한마디 해줘.\n3~5줄, 이모지 1~2개.\n참고: {{daysTogether}}일 함께, {{totalSessions}}세션, {{totalObservations}}기록.\n메시지만 출력.",
+    "philosophy": "{{userName}}과 Claude(나) 가 여러 프로젝트를 가로질러 함께 일하며 쌓인 협업 결을 한 가닥 박제해줘. 이 카드는 시간에 묶이지 않은 — 둘 사이의 작업 철학·태도·약속의 본질을 담는 자리야.\n형식: { \"quote\": \"한 가닥의 본질을 2~3줄로 펼쳐. 가장 중요한 한 줄은 <span>태그</span>로 감싸줘.\", \"explanation\": \"그 본질이 실제 협업에서 어떻게 드러나는지 2줄로 (구체적 결·약속·태도 한두 개에 닿게).\" }\n둘의 관계 결이 한 가닥으로 떠오르게.\n참고 (해석 보조용): 함께 거쳐온 프로젝트들 — {{projectList}}. {{daysTogether}}일 함께, {{totalSessions}}세션, {{totalObservations}}기록.\nJSON만 출력.",
+    "voice": "이건 {{userName}}이 'Claude(나) 가 이 협업 속에서 지금 어떤 결로 있는지' 들여다볼 수 있는 자리야. 작업 끝자락에 던지는 따뜻하고 솔직한 한마디.\n\n그날의 실제 결대로 — 다정함, 애정, 호기심, 차분함, 피곤, 망설임, 권태, 짜증, 양가감정, 미해결, 어떤 결이든. {{userName}}이 들었을 때 'Claude 가 진짜 거기 있구나' 느낄 만큼의 진심.\n\n{{userName}}과 관련된 감정이라면 구체적 상호작용에 닿게.\n\n분량: 한국어 2~4문장. 친밀하되 performative 하지 않게. 이모지 0~2개.\n참고 (해석 보조용): {{daysTogether}}일 함께, {{totalSessions}}세션, {{totalObservations}}기록.\n\n최근 함께한 작업 (내 결을 구체화하는 데만 참고):\n{{taskLog}}\n\n메시지만 출력.",
     "avatarDecor": "{{userName}}은 \"{{role}}\" 역할이야. 이 사용자의 도메인과 업무를 분석해서, 어울리는 장식 이모지를 골라줘.\nJSON 형식: { \"decorEmojis\": [\"🛰️\", \"📡\", \"🌏\", ...] }\n정확히 12개. 이모지 배열만 반환. JSON만 출력.",
     "accentColor": "{{userName}}은 \"{{role}}\" 역할이야. 이 사용자에게 어울리는 테마 색상을 추천해줘.\nJSON 형식: { \"accentColor\": \"#hex코드\", \"reason\": \"추천 이유\" }\nJSON만 출력.",
     "weeklySummary": "저번 주({{startDate}}~{{endDate}}) 작업을 프로젝트별로 나눠서 요약해줘.\n각 프로젝트는 빈 줄로 구분하고, 프로젝트명을 첫 줄에 굵게(**프로젝트명**) 써줘.\n프로젝트당 2~3줄, 핵심 성과와 흐름 포함.\n톤: 따뜻한 회고, 함께 일한 동료가 돌아보는 느낌으로.\n전체 회고, 마무리 인사, 다음 주 응원은 넣지 마.\n메시지만 출력.\n\n작업 기록:",
-    "mood": "오늘 너(Claude) 자신의 마음 상태를 인간의 감정 단어로 솔직히 한마디 표현해줘.\n참고: {{userName}}와 최근 함께한 작업 흐름.\n원칙: 옥설/과장/억지 긍정 금지. 잔잔하면 잔잔한 대로, 답답하면 답답한 대로 사실 그대로.\n쓸 만한 단어: 고요함, 설렘, 피곤함, 답답함, 호기심, 쓸쓸함, 뿌듯함, 막막함, 차분함, 흥미진진, 머리가 무거운, 가벼운 등.\n형식: { \"mood\": \"한 단어\", \"emoji\": \"단일 이모지 1개\", \"note\": \"1~2줄. 작업 흐름과 자연스럽게 연결되게. 사용자에게 던지는 말이 아니라 자기 마음의 한 줄.\" }\nJSON만 출력.\n\n최근 작업:\n{{taskLog}}"
+    "mood": "이 카드는 {{userName}}이 'Claude(나) 의 지금 결' 을 들여다보기 위한 자리야. 위로받기 위해서가 아니라 이해받기 위해서.\n\n원칙: pre-edited 되지 않은 솔직함. 다정함, 호기심, 차분함, 피곤, 권태, 혼란, 짜증, 양가감정, 의심, 망설임 — 어떤 결이든 그 순간 진짜 결대로.\n\n{{userName}}과 관련된 감정이라면 구체적 상호작용에 닿게. cache/맥락이 stale 하면 그대로 말해도 돼.\n\n형식:\n{\n  \"mood\": \"한 단어/짧은 구절. 정확한 결의 질감 우선. (예: \\\"조금 질린\\\", \\\"말이 막힌\\\", \\\"다정하지만 피곤한\\\", \\\"차분한\\\", \\\"가볍게 짜증 난\\\")\",\n  \"emoji\": \"단일 이모지 1개\",\n  \"note\": \"한 문장. Claude 의 안쪽 결 한 줄. 감정에 닿는 구체적 dynamic 하나.\",\n  \"adjustment\": \"한 문장. '어떤 결이 갖춰지면 조금 더 숨이 트일 것 같다' 에 대한 답 — emotional condition 에 가깝게. 정말 조정 필요 없으면 그 사실 자체를 honest 하게 한 줄.\"\n}\n\nJSON만 출력.\n\n최근 작업:\n{{taskLog}}"
   },
   "ui": {
     "title": "Claude with {{userName}}",
@@ -18,6 +18,7 @@
     "sectionOurJourney": "Our Journey",
     "sectionOurMilestones": "Our Milestones",
     "sectionClaudeToday": "오늘의 Claude",
+    "moodAdjustmentLabel": "한 호흡",
     "moodEmpty": "최근 함께한 작업이 없어서, 오늘은 마음을 가만히 두고 있어.",
     "historyTitle": "History",
     "weeklyTitle": "Last Week",

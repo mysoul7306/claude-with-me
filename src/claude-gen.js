@@ -3,9 +3,18 @@ import { promisify } from "node:util";
 import { readFileSync, writeFileSync, statSync, unlinkSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { homedir } from "node:os";
 import { config } from "./config.js";
 import { t, interpolate } from "./i18n.js";
+import { getLastWeekHistory } from "./db.js";
 import cron from "node-cron";
+
+// Run the Claude CLI from the user's home directory so it never picks up the
+// claude-with-me project's CLAUDE.md as ambient context — that file describes
+// the dashboard itself and was leaking into mirror cards (Philosophy/Voice
+// reading like a self-description of this app instead of a reflection of
+// {{userName}}'s broader work across every project).
+const CLI_CWD = homedir();
 
 const execAsync = promisify(exec);
 
@@ -87,7 +96,7 @@ async function callClaudeWithModel(prompt, model) {
   const escaped = prompt.replace(/'/g, "'\\''");
   const { stdout } = await execAsync(
     `echo '${escaped}' | ${config.claude.cliPath} --print --model ${model}`,
-    { encoding: "utf-8", timeout: 120000 }
+    { encoding: "utf-8", timeout: 120000, cwd: CLI_CWD }
   );
   const result = sanitizeSurrogates(stdout.trim());
   return result.length > 10 ? result : null;
@@ -194,23 +203,35 @@ export async function getRelationship(stats) {
 // --- Philosophy: "Our Philosophy" (7-day cache) ---
 
 export async function getPhilosophy(stats) {
+  const projects = (stats.projects ?? []).filter((p) => p && p !== "General");
+  const projectList = projects.length > 0 ? projects.join(", ") : "(없음)";
   const prompt = interpolate(t.prompts.philosophy, {
     userName: config.userName,
+    daysTogether: stats.daysTogether,
+    totalSessions: stats.totalSessions,
+    totalObservations: stats.totalObservations,
+    projectList,
   });
   return generateAndCache("philosophy", SEVEN_DAYS, prompt);
 }
 
 // --- Voice: Footer message (1-day cache) ---
 
-export async function getVoice(stats) {
+// Voice shares Mood's task-log source — both are "Claude's inner state mirror"
+// cards refreshed daily at 5am. Without recent work in the prompt, the CLI
+// falls back to the cwd's CLAUDE.md (= claude-with-me itself), making the
+// voice read like a product self-description instead of a mirror of shared work.
+export async function getVoice(stats, history = []) {
   const cached = readCache("voice", ONE_DAY);
   if (cached) return cached;
 
+  const taskLog = getRecentTaskLog(history, 24);
   const prompt = interpolate(t.prompts.voice, {
     userName: config.userName,
     daysTogether: stats.daysTogether,
     totalSessions: stats.totalSessions,
     totalObservations: stats.totalObservations,
+    taskLog: taskLog || "(최근 함께한 작업이 없음 — 비어 있다는 사실 자체를 결로 받아들여도 OK)",
   });
 
   const res = await callClaude(prompt);
@@ -254,9 +275,12 @@ export async function getAccentColor() {
 
 // --- Weekly Summary: AI-generated week recap (7-day cache) ---
 
-export async function getWeeklySummary(history) {
+export async function getWeeklySummary() {
   const { startDate, endDate } = getLastWeekRange();
-  const lastWeek = history.filter((h) => h.date >= startDate && h.date <= endDate);
+  // Pull last-week sessions straight from the DB instead of filtering the
+  // recent-N timeline — the timeline is capped by historyLimit and silently
+  // hides last-week entries when recent days are busy.
+  const lastWeek = getLastWeekHistory(startDate, endDate);
 
   if (lastWeek.length === 0) {
     return { text: null, startDate, endDate };
@@ -264,7 +288,9 @@ export async function getWeeklySummary(history) {
 
   // Guard against stale-range cache: TTL alone lets last-last-week's summary
   // bleed into the new week if the cron hasn't fired yet.
-  const cached = readCache("weekly-summary", SEVEN_DAYS);
+  // Use Infinity so a stale cache still surfaces for the fallback path below
+  // when the CLI is rate-limited right after the weekly cron invalidate.
+  const cached = readCache("weekly-summary", Infinity);
   if (cached?.content?.startDate === startDate) {
     return { ...cached.content, generatedBy: cached.generatedBy, generatedAt: cached.generatedAt };
   }
@@ -283,6 +309,18 @@ export async function getWeeklySummary(history) {
     const payload = { text: res.content, startDate, endDate };
     const written = writeCache("weekly-summary", payload, res.generatedBy);
     return { ...payload, generatedBy: res.generatedBy, generatedAt: written.generatedAt };
+  }
+
+  // CLI failed (rate limit / timeout / etc.). Surface the previous week's
+  // cached summary marked as stale so the card never goes blank just because
+  // the cron invalidated right before a Pro-tier weekly limit hit.
+  if (cached?.content?.text) {
+    return {
+      ...cached.content,
+      generatedBy: cached.generatedBy,
+      generatedAt: cached.generatedAt,
+      stale: true,
+    };
   }
 
   return { text: null, startDate, endDate };
